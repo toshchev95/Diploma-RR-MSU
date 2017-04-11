@@ -53,7 +53,7 @@ end proc:
 ### get list Problem of lists Unimod matrix ###
 ###############################################
 # function getListOfProblemUnimodulMatrix
-getListOfProblemUnimodulMatrix := proc(K::Matrix) 
+getListOfProblemUnimodulMatrix := proc(K::Matrix, numberOpMatrix::integer) 
   local vlist := list(), 
         height := op(1, K)[1], 
         width := op(1, K)[2];
@@ -72,15 +72,23 @@ getListOfProblemUnimodulMatrix := proc(K::Matrix)
   count := 1;
   problemList := list();
   try
-    #print(fullNullSpace);
+
     while member(fullNullSpace[count], fullNullSpace) do 
       #инструкции 
+      print(problemList);
       nullSpace := fullNullSpace[count];
+      print(nullSpace);
       nullSpace := map(proc (x, y) options operator, arrow; x*y end proc, nullSpace, lcm(seq(x, `in`(x, map(denom, nullSpace)))));
-      #print("2: ", nullSpace);
-      listUniMatrixs := getListUnimodulMatrix(K, nullSpace);
+      nullSpace := simplify(nullSpace);
+      print(nullSpace);
 
-      problemList := [op(problemList), op(listUniMatrixs)];
+      # UID
+      UID_vector := [op(UID_vector), [numberOpMatrix, nullSpace]];
+
+      listUniMatrixs := getListUnimodulMatrix(K, nullSpace);
+      print(listUniMatrixs);
+      problemList := [op(problemList), [nullSpace, listUniMatrixs]];
+      #problemList := [op(problemList), op(listUniMatrixs)];
 
       count := count + 1;
 
@@ -89,6 +97,11 @@ getListOfProblemUnimodulMatrix := proc(K::Matrix)
     print("QA END1");
   catch:
   end try;
+  
+  if problemList = list() then
+    error "problemList is empty";
+  end if;
+
   return problemList;
 end proc:
 
@@ -98,8 +111,10 @@ end proc:
 ### get list Unimod matrix ###
 ##############################
 # function getListUnimodulMatrix
-getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector) 
+getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector, numberOpMatrix::integer) 
   local x2, indexNullSpace, ord2, j,i,j2, posX, ord1, ordTemp;
+
+  # init
   local vlist := list(), 
         height := op(1, K)[1], 
         width := op(1, K)[2];
@@ -108,6 +123,8 @@ getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector)
         repeatCount := 0;
   local uni, count, problemList, listUniMatrixs, sizeList;
   local porydok, numberList := list();
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
+  
   with(OreTools):
   x2 := 0;
   ord2 := 0;
@@ -150,6 +167,9 @@ getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector)
   for i from 1 to repeatCount do
     uni := getUnimodulMatrix(K, height, nullSpace, porydok, numberList[i]);
     vlist := [op(vlist), uni];
+
+    # UID
+    UID_uniMatrix := [op(UID_uniMatrix), [numberOpMatrix, nullSpace, uni]];
   od;
  
   return vlist;
@@ -251,38 +271,54 @@ end proc:
 #listIK := []; print(RR(P, listIK)):
 
 # function RR
-RR := proc(opMatrix::Matrix, listG::list)
+RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
   local A,B, saved,saved_poly, nextRR, count;
-  local uni, nextNumber, estimation;
+  local uni, uniList, nextNumber, nextNumberList, estimation;
   local listChain, listGlobal, listGain;
   global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
 
 
   # init
-  B := opMatrix;
-  A := getFrontMatrix(B);
+  A := getFrontMatrix(opMatrix);
   listChain := [];
-  listGain := [];
+  #listGain := [];
   listGlobal := [];
 
-  estimation := estimations(opMatrix, 0);
+  #estimation := estimations(opMatrix, 0);
   count := Statistics:-Count(listG);
   if count > 0 then
-    listGain := [op(listG), B];
+    listGain := [op(listG), opMatrix];
   else
-    listGain := [B];
+    listGain := [opMatrix];
   end if;
-  if (LinearAlgebra:-Rank(A) < LinearAlgebra:-RowDimension(A)) 
-     and (estimation) then
 
-    uni:= getListOfProblemUnimodulMatrix(B);
+  print(A, LinearAlgebra:-Rank(A));
+  print(LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(A)));
 
-    for nextNumber from 1 to Statistics:-Count(uni) do
+  if (LinearAlgebra:-Rank(A) < LinearAlgebra:-RowDimension(A)) then
+   #  and (estimation) then
 
-      saved := getReverseLUMatrix(B, uni[nextNumber]);
-      nextRR := RR(saved, listGain);
-      listChain := nextRR;
-      listGlobal := [op(listGlobal), listChain];
+    print(0);
+    uniList:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
+    #uni:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
+    print(uniList);
+
+    for nextNumberList from 1 to nops(uniList) do
+
+      uni := uniList[nextNumberList][2]; # список унимодулярных матриц зависящих от nullSpace = uniList[nextNumberList][1]
+
+      for nextNumber from 1 to Statistics:-Count(uni) do
+      
+        saved := getReverseLUMatrix(opMatrix, uni[nextNumber]);
+  
+        # UID
+        UID_opMatrix := [op(UID_opMatrix), saved];
+        List_UIDs := [op(List_UIDs), [numberOpMatrix, uniList[nextNumberList][1], uni[nextNumber], nops(UID_opMatrix)]];
+  
+        nextRR := RR(saved, listGain, nops(UID_opMatrix));
+        listChain := nextRR;
+        listGlobal := [op(listGlobal), listChain];
+      end do;
     end do;
 
     return op(listGlobal);
@@ -304,9 +340,9 @@ outputRR := proc(opMatrix::Matrix)
   UID_uniMatrix := list();
   List_UIDs := list();
 
-  listResultOpMatrix := RR(opMatrix, listResultMatrix);
+  UID_opMatrix := [op(UID_opMatrix), opMatrix];
+  listResultOpMatrix := RR(opMatrix, [], 1 );
 
-  # Вывод всех UID в правильном порядке
   #return listResultOpMatrix;
 end proc:
 
@@ -385,30 +421,6 @@ end proc:
 
 getNewMatrix := proc()
   return M1;
-end proc:
-
-
-Output := proc(K::list)
-  local count, lastNumber, result, tempList, i;
-  result := [];
-  count := Statistics:-Count(K);
-  #print(K);
-  print(count);
-  for i from 1 to count do
-    tempList := K[i];
-    #print(tempList);
-    lastNumber := Statistics:-Count(tempList);
-    result := [op(result), tempList[lastNumber]];
-  end do;
-  return result;
-end proc:
-
-outputResult := proc(K::Matrix)
-  local listIK, output, res;
-  listIK := [];
-  output := RR(K, listIK);
-  res := [output];
-  return Output(res);
 end proc:
 
 func := proc()
