@@ -338,39 +338,44 @@ outputRR := proc(opMatrix::Matrix)
   UID_opMatrix := [op(UID_opMatrix), opMatrix];
   listResultOpMatrix := RR(opMatrix, [], 1 );
 
+  #convertRR();
+  #saveAs("C:\\output.txt");
   #return listResultOpMatrix;
 end proc:
 
 
 # function convertRR
-convertRR:= proc(List::list)
-  local convertListMatrix,L,i,j,polynom,matrix;
-  convertListMatrix := list();
-  print(List);
-  for i from 1 to nops(List) do
-    matrix := List[i];
-    if type(matrix, 'Matrix') then
-      polynom := convertOrePolyToPoly(matrix);
-      convertListMatrix := [op(convertListMatrix), polynom];
-    elif type(matrix, 'exprseq') or type(matrix, 'list') then
-      convertListMatrix := [op(convertListMatrix), convertMatrix(matrix)];
-    else
-      convertListMatrix := [op(convertListMatrix), matrix];
-    end if;
-  od;
-  return convertListMatrix;
+convertRR:= proc()
+  local i;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
+
+  # UID_opMatrix
+  for i to nops(UID_opMatrix) do
+    UID_opMatrix[i] := convertMatrixOrePolyToPoly(UID_opMatrix[i]);
+  end do;
+
+  # UID_uniMatrix
+  for i to nops(UID_uniMatrix) do
+    UID_uniMatrix[i][3] := convertMatrixOrePolyToPoly(UID_uniMatrix[i][3]);
+  end do;
+
+  # List_UIDs
+  for i to nops(List_UIDs) do
+    List_UIDs[i][3] := convertMatrixOrePolyToPoly(List_UIDs[i][3]);
+  end do;
+
 end proc:
 
-# function convertOrePolyToPoly
-convertOrePolyToPoly := proc(K::Matrix)
-  local i, j, M;
-  M := Matrix(op(1, K)[1], op(1, K)[2]);
-  for i from 1 to op(1, K)[1] do
-    for j from 1 to op(1, K)[2] do
-      M[i][j] = OreTools[Converters]:-FromOrePolyToPoly(K[i][j],d/dx);
-    end do;
-  end do;      
-  return M;
+# function convertMatrixOrePolyToPoly
+convertMatrixOrePolyToPoly := proc(matrix::Matrix) # delta #∂
+  return map(proc (x) options operator, arrow; OreTools[Converters]:-FromOrePolyToPoly(x, delta) end proc, matrix);
+end proc:
+
+# function saveAs(path)
+saveAs:=proc(path)
+  local i,j;
+
+  #writedata(!);
 end proc:
 
 ############################
