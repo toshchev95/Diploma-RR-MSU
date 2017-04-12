@@ -75,18 +75,14 @@ getListOfProblemUnimodulMatrix := proc(K::Matrix, numberOpMatrix::integer)
 
     while member(fullNullSpace[count], fullNullSpace) do 
       #инструкции 
-      print(problemList);
       nullSpace := fullNullSpace[count];
-      print(nullSpace);
       nullSpace := map(proc (x, y) options operator, arrow; x*y end proc, nullSpace, lcm(seq(x, `in`(x, map(denom, nullSpace)))));
       nullSpace := simplify(nullSpace);
-      print(nullSpace);
 
       # UID
       UID_vector := [op(UID_vector), [numberOpMatrix, nullSpace]];
 
-      listUniMatrixs := getListUnimodulMatrix(K, nullSpace);
-      print(listUniMatrixs);
+      listUniMatrixs := getListUnimodulMatrix(K, nullSpace, numberOpMatrix);
       problemList := [op(problemList), [nullSpace, listUniMatrixs]];
       #problemList := [op(problemList), op(listUniMatrixs)];
 
@@ -292,8 +288,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     listGain := [opMatrix];
   end if;
 
-  print(A, LinearAlgebra:-Rank(A));
-  print(LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(A)));
+  #print(A, LinearAlgebra:-Rank(A),LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(A)));
 
   if (LinearAlgebra:-Rank(A) < LinearAlgebra:-RowDimension(A)) then
    #  and (estimation) then
@@ -301,7 +296,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     print(0);
     uniList:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
     #uni:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
-    print(uniList);
+    #print(uniList);
 
     for nextNumberList from 1 to nops(uniList) do
 
