@@ -168,12 +168,13 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
 #      globalNullspace := nullspaceWithoutDenom(front);
 #    end if;
     if countVectors <> 0 then
+      globalNullspace := nullspaceWithoutDenom(front);
       for i to nops(globalNullspace) do
         high := getDiffEquation(highDiff);
         vec:=globalNullspace[i];
         countNonValue := 0;
         listIndex := list();
-  
+    
         for j to nops(vec) do
           if vec[j] <> 0 then 
             countNonValue:=countNonValue + 1;
@@ -189,7 +190,6 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
           # conditional about наличие строк операторной матрицы
           # high надо изменить на рандомный
           vectorUnEnableDiff := [op(vectorUnEnableDiff), high];
-  
           if bUnimodular = true then
             bUnimodular_1 := false;
           else
@@ -351,20 +351,27 @@ end proc:
 
 # function GenerateMatrixRR
 GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::integer) option overload; #counter_strings
-  local i, m_Gen, m_stepenPoly,m_vector_LZ, m_list_MaxDiffOrder, m_highDiff, m_UniMatrix, two_vectors,
-    m_indexMaxDiffOrderInList,m_getMatrix;
-  #global m_vector_LZ, m_list_MaxDiffOrder;
+  local i, m_Gen, m_prevGen, m_stepenPoly, m_highDiff, m_UniMatrix, two_vectors,
+    m_indexMaxDiffOrderInList,m_getMatrix, bFirstIterWhile;
+  global m_vector_LZ, m_list_MaxDiffOrder;
 
   # Сначала генерируем матрицу, которая невырождена (/= 0, ранк == размера)
   m_highDiff := highDiff;
 
-  m_Gen := matrixOperatorGenerate(size, 1, false, m_highDiff, 10);
+  m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
+  m_prevGen := m_Gen;
   print(m_Gen, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
 
   for i to iter do
     m_getMatrix := m_Gen;
+    bFirstIterWhile := true;
 
-    while LinearAlgebra:-Rank(getFrontMatrix(m_getMatrix)) = size do
+    while LinearAlgebra:-Rank(getFrontMatrix(m_getMatrix)) = size
+      or LinearAlgebra:-Equal(m_getMatrix,m_prevGen) or bFirstIterWhile do
+
+      bFirstIterWhile := false;
+      print("while");
+      
       # Выполняем алгоритм Row-Reduction в обратном порядке с учётом обратной унимодулярной матрицы.
       # Сгенерируем обратную унимодулярную матрицу (хз как) и умножим на невырожденную матрицу
       # Для этого мы создадим два списка размера size, 
@@ -375,21 +382,19 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::i
       m_list_MaxDiffOrder := Generate(list(integer(range= 0..m_highDiff), size));
       
       # Построим вектор без однозначностей
-      two_vectors := simultaneouslyProcessLists(m_vector_LZ, m_list_MaxDiffOrder);
-      m_vector_LZ := two_vectors[1];
-      m_list_MaxDiffOrder := two_vectors[2];
-      m_indexMaxDiffOrderInList := two_vectors[3];
+      m_indexMaxDiffOrderInList := simultaneouslyProcessLists();
 
       # Создадим обратную операторную унимодулярную матрицу 
-      m_UniMatrix := getReverseUnimodularMatrix(m_vector_LZ, m_list_MaxDiffOrder, m_indexMaxDiffOrderInList);
+      m_UniMatrix := getReverseUnimodularMatrix(m_indexMaxDiffOrderInList);
   
       # Compute L' = m_UniMatrix*m_Gen
       # Аналог function getReverseLUMatrix(L,U) = U*L
       m_getMatrix := getReverseLUMatrix(m_Gen,m_UniMatrix);
     end do;
     
-    print(m_getMatrix);
+    m_prevGen := m_Gen;
     m_Gen := m_getMatrix;
+    print(i,m_Gen,LinearAlgebra:-Equal(m_Gen,m_prevGen));
 
     # Пока не понятно, как обработать параметры
     # <!> Возникает сложность, связанная с получением неоднозначности, у которой количество векторов ЛЗ будет больше одного
@@ -400,26 +405,30 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::i
 end proc:
 
 # function simultaneouslyProcessLists()
-simultaneouslyProcessLists := proc(m_vector_LZ::list, m_list_MaxDiffOrder::list)
+simultaneouslyProcessLists := proc()
   local i,j,listNumber,maxDiffOrder,size, countMaxDiffOrder, list_MaxDiffOrder, vector_LZ,
-    indexMaxDiffOrderInList;
+    indexMaxDiffOrderInList,listEmptyNumber;
+  global m_vector_LZ, m_list_MaxDiffOrder;
 
   # := formal parametrs
-  list_MaxDiffOrder := m_list_MaxDiffOrder;
-  vector_LZ := m_vector_LZ;
+#  list_MaxDiffOrder := m_list_MaxDiffOrder;
+#  vector_LZ := m_vector_LZ;
 
   # init
-  size := nops(vector_LZ);
+  size := nops(m_vector_LZ);
   listNumber := list();
+  listEmptyNumber := list();
   maxDiffOrder := 0;
   countMaxDiffOrder := 0;
   indexMaxDiffOrderInList := 0;
 
   for i to size do
-    if vector_LZ[i] <> 0 then
+    if m_vector_LZ[i] <> 0 then
 
-      if maxDiffOrder < list_MaxDiffOrder[i] then
-        maxDiffOrder := list_MaxDiffOrder[i];
+      # по логике алгоритма нам не критично выбирать максимальный порядок из всех 
+      # максимальных порядков ненулевых строк операторной матрицы
+      if maxDiffOrder < m_list_MaxDiffOrder[i] then 
+        maxDiffOrder := m_list_MaxDiffOrder[i];
         countMaxDiffOrder := 1;
         indexMaxDiffOrderInList := i;
       else
@@ -427,31 +436,51 @@ simultaneouslyProcessLists := proc(m_vector_LZ::list, m_list_MaxDiffOrder::list)
       end if;
       
       listNumber := [op(listNumber), i];
-
+    else
+      listEmptyNumber := [op(listEmptyNumber), i];
     end if;
   od;
 
-  if countMaxDiffOrder = 1 then
-
+  if countMaxDiffOrder <= 1 then
+#  while countMaxDiffOrder <= 1 do 
     for i to nops(listNumber) do
       j := listNumber[i];
-      if list_MaxDiffOrder[j] <> maxDiffOrder then
+      if m_list_MaxDiffOrder[j] <> maxDiffOrder then
 
-        vector_LZ[j] := Generate(integer(range=-10..10));
-        list_MaxDiffOrder[j] := maxDiffOrder;
+        #m_vector_LZ[j] := Generate(integer(range=-10..10));
+
+        m_list_MaxDiffOrder[j] := maxDiffOrder;
         #break; # Можно самим установить количетсво одинаковых максимальных порядков строк
       end if;
 
     od;
 
+    if countMaxDiffOrder <= 1 then
+      for i to nops(listEmptyNumber) do
+
+        j := listEmptyNumber[i];
+        m_vector_LZ[j] := Generate(integer(range=-10..10));
+        m_list_MaxDiffOrder[j] := maxDiffOrder;
+        countMaxDiffOrder := countMaxDiffOrder + 1;
+        
+        if countMaxDiffOrder > 1 then
+          break;
+        end if;
+
+      end do;
+    end if;
+
+#  end do;
   end if;
 
-  return [vector_LZ, list_MaxDiffOrder, indexMaxDiffOrderInList];
+  return indexMaxDiffOrderInList;
+  #return [vector_LZ, list_MaxDiffOrder, indexMaxDiffOrderInList];
 end proc:
 
 # function getReverseUnimodularMatrix()
-getReverseUnimodularMatrix := proc(m_vector_LZ::list, m_list_MaxDiffOrder::list, m_indexMaxDiffOrderInList::integer)
+getReverseUnimodularMatrix := proc(m_indexMaxDiffOrderInList::integer)
   local i,j, m_reverseUniMatrix,size;
+  global m_vector_LZ, m_list_MaxDiffOrder;
 
   # init
   size := nops(m_vector_LZ);
@@ -482,14 +511,3 @@ getReverseUnimodularMatrix := proc(m_vector_LZ::list, m_list_MaxDiffOrder::list,
   return m_reverseUniMatrix;
 end proc:
 
-# function matrixOperatorGenerate2
-matrixOperatorGenerate2 := proc(size, countVectors, bUnimodular, highDiff, highBound)
-  local i,j,m_Gen, front;
-
-  m_Gen := Matrix(size);
-  front := frontGenerate(size, countVectors, highBound, true);
-
-  # 
-
-  return m_Gen;
-end proc:
