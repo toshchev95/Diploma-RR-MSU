@@ -224,8 +224,6 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
       if globalDelta[i] <> 0 then
         print(i);
         operatorMatrix[i] := generateRowOrePoly(front[i], highBound, highDiff);
-        #highDifferChangingRow := getHighDifferRow(operatorMatrix[i]);
-        #vectorUnEnableDiff := [op(vectorUnEnableDiff), highDifferChangingRow];
       end if;
     od;
 
@@ -238,12 +236,12 @@ end proc:
 
 generateRowOrePoly := proc(vecFront, highBound, highDiff)
   local i, j, vectorRow, elem, size, stepenDiff, boundCoef;
-  global vectorUnEnableDiff, bExistNullDiff;
+  global vectorUnEnableDiff, bExistNullDiff, sizeVec;
 
+  size := Statistics:-Count(vecFront);
+  sizeVec := size;
   stepenDiff := HasDiff(highDiff);
-  size := nops(vecFront);
   vectorRow := Vector[row](size);
-  
   for i to size do
     
     elem := vecFront[i];
@@ -252,7 +250,6 @@ generateRowOrePoly := proc(vecFront, highBound, highDiff)
     else
       vectorRow[i] := generateOrePoly(stepenDiff, highBound, false, 0);
     end if;
-
   od;
   return vectorRow;
 end proc:
@@ -291,7 +288,7 @@ end proc:
 
 HasDiff := proc(highDiff)
   local i,j, genValue, flag, size;
-  global vectorUnEnableDiff;
+  global vectorUnEnableDiff, sizeVec;
 
   genValue := -1;
   size := nops(vectorUnEnableDiff);
@@ -300,15 +297,18 @@ HasDiff := proc(highDiff)
   if (highDiff = size - 1) then
     error "List of values is fill!" 
   end if;
-  
+  if highDiff < sizeVec and size = highDiff then
+    vectorUnEnableDiff := list();
+    print("List of vectorUnEnableDiff values is fill!");
+    print("List of vectorUnEnableDiff is clear. Fill out rows again!");
+    print("There are equal orders differential in different rows.");
+  end if;
   while evalb(flag) do
     genValue := Generate(integer(range= 1 .. highDiff));
-    #for i to size do
     if not(member(genValue, vectorUnEnableDiff)) then
       flag := false;
       break;
     end if;
-    #od;
   od;
 
   if genValue = -1 then
@@ -360,7 +360,7 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::i
 
   m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
   m_prevGen := m_Gen;
-  print(m_Gen, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
+  print(m_Gen);#, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
 
   for i to iter do
     m_getMatrix := m_Gen;
