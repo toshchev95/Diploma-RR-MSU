@@ -325,18 +325,6 @@ getDiffEquation := proc(highDiff)
   return diff(y(x), [`$`(x, highDiff)]);
 end proc:
 
-# function getHighDifferRow(list)
-getHighDifferRow := proc(list)
-  local i, ord;
-  ord := 0;
-    for i from 1 to nops(list) do
-      if nops(OreTools:-Normalize(list[i]))>ord then
-        ord := nops(OreTools:-Normalize(list[i]));
-      end if; 
-    end do; 
-  return ord - 1;
-end proc:
-
 
 
 # @parametrs:
