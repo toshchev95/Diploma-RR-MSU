@@ -24,17 +24,10 @@ Bug1 := Matrix(4, 4,
           (4, 1) = 0, (4, 2) = 0, (4, 3) = 0, (4, 4) = 0}):
 
 #	Неоднозначности алгоритма:
-#	
-#	
 #	1) Выбор вектора коэффициентов линейной зависимости строк вырожденной фронтальной матрицы
-#	help function s: frontGenerate, hasNull, nullspaceWithoutDenom
-#	
-#	
+#	help function: frontGenerate, hasNull, nullspaceWithoutDenom
 #	2) Выбор элемента вектора коэффициентов линейной зависимости строк дифференциального оператора
 #	
-#	
-#	
-
 
 # function frontGenerate(size, countVectors, highBound, bNullVectors).
 # size - Row x Column
@@ -103,6 +96,45 @@ hasNull := proc(matrix, worked)
     end if;
   od;
   return false;
+end proc:
+
+# function matrixWithoutDenom without denominator (знаменатилей)
+matrixWithoutDenom := proc(opMatrix::Matrix)
+  local i, vector, size;
+  size := LinearAlgebra:-RowDimension(opMatrix);
+
+  for i to size do
+    vector := opMatrix[i];
+    opMatrix[i] := simplify( map(proc (x, y) options operator, arrow; x*y end proc, vector, lcm(seq(x, `in`(x, map(denom, vector))))) );
+  end do;
+  return opMatrix;
+end proc:
+
+# function matrixOreWithoutDenom without denominator (знаменатилей) в матрице из полиномов Оре
+matrixOreWithoutDenom := proc(opMatrix::Matrix)
+  local i, vector, size;
+  size := LinearAlgebra:-RowDimension(opMatrix);
+
+  for i to size do
+    vector := opMatrix[i];
+    opMatrix[i] := eqLCMinMatrix(vector);
+  end do;
+  return opMatrix;
+end proc:
+
+# function eqLCMinMatrix
+eqLCMinMatrix := proc(oreListList) 
+  local i, rowMatrix, m_eqLCM, m_listLCM; 
+  m_listLCM := map(proc (ore) options operator, arrow; lcm(seq(x, `in`(x, map(denom, ore)))) end proc, oreListList); 
+  m_listLCM := ListTools:-MakeUnique(convert(m_listLCM,list));
+
+  m_eqLCM := 1; 
+  for i to nops(m_listLCM) do 
+    m_eqLCM := m_listLCM[i]*m_eqLCM; 
+  end do; 
+  rowMatrix := map(proc (ore) options operator, arrow; OrePoly(seq(x, `in`(x, ore))*m_eqLCM) end proc, oreListList); 
+
+  return rowMatrix;
 end proc:
 
 # function nullspaceWithoutDenom without denominator (знаменатилей)
@@ -374,10 +406,15 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::i
 
       # Создадим обратную операторную унимодулярную матрицу 
       m_UniMatrix := getReverseUnimodularMatrix(m_indexMaxDiffOrderInList);
-  
+      print("m_UniMatrix = ",m_UniMatrix);
+
       # Compute L' = m_UniMatrix*m_Gen
       # Аналог function getReverseLUMatrix(L,U) = U*L
       m_getMatrix := getReverseLUMatrix(m_Gen,m_UniMatrix);
+
+      #print("before",m_getMatrix);
+      m_getMatrix := matrixOreWithoutDenom(m_getMatrix);
+      #print("afterq",m_getMatrix);
     end do;
     
     m_prevGen := m_Gen;
@@ -485,13 +522,14 @@ getReverseUnimodularMatrix := proc(m_indexMaxDiffOrderInList::integer)
           m_reverseUniMatrix[i,j] := OrePoly(1);
         end if;
       else
-        # formul
-        #m_reverseUniMatrix[m_indexMaxDiffOrderInList,j] := OrePoly
-    m_reverseUniMatrix[m_indexMaxDiffOrderInList,j] := coefForReverseConversation(
-                                      convert(m_vector_LZ,Vector), 
+        #print(m_vector_LZ, j, m_indexMaxDiffOrderInList, m_list_MaxDiffOrder,
+        #  coefForReverseConversation( m_vector_LZ,j, m_indexMaxDiffOrderInList, m_list_MaxDiffOrder));
+
+        m_reverseUniMatrix[m_indexMaxDiffOrderInList,j] := coefForReverseConversation(
+                                      m_vector_LZ, 
                                       j, 
                                       m_indexMaxDiffOrderInList, 
-                                      convert(m_list_MaxDiffOrder,vector));
+                                      m_list_MaxDiffOrder);
       end if;
     end do;
   end do;
@@ -499,3 +537,27 @@ getReverseUnimodularMatrix := proc(m_indexMaxDiffOrderInList::integer)
   return m_reverseUniMatrix;
 end proc:
 
+# function coefForReverseConversation
+coefForReverseConversation := proc(C, x2::integer, ord2::integer, g_porydok)
+  local i,j,porydok;
+  local x1, n, ode;
+  #print("nullSpace = ", C, "row x2 = ", x2,    "ord2 = ",ord2 ,"porydok = ",porydok);
+  #x1 := C[][x2]; 
+  #x1 := - C[][x2] / C[][ord2];
+  porydok := convert(g_porydok,vector);
+  if x2 <> ord2 then
+    x1 := - C[x2]  / C[ord2];
+  else
+    x1 := 1 / C[ord2];
+  end if;
+
+  if x1=0 then
+    return OrePoly(0);
+  else
+    n := porydok[ord2] - porydok[x2];
+    ode := diff(y(x), [`$`(x, n)]);
+    
+    #print(x1,LinearOperators[DEToOrePoly](x1*ode, y(x)));
+    return LinearOperators[DEToOrePoly](x1*ode, y(x)); 
+  end if;
+end proc:

@@ -22,6 +22,15 @@ M1 := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),
 
 P := Matrix([[OrePoly((1/2)*x^2), OrePoly(1, -(1/2)*x)], [OrePoly(-3, -x), OrePoly(0, 0, 1)]]):
 
+getMatrix := proc()
+  return L1;
+end proc:
+
+getNewMatrix := proc()
+  return M1;
+end proc:
+
+
 #######################
 # cal frontal matrix  #
 #######################
@@ -172,7 +181,7 @@ getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector, numberOpMatrix::inte
 end proc:
 
 # function getUnimodulMatrix
-getUnimodulMatrix := proc(K::Matrix, height, nullSpace, porydok, ord2)
+getUnimodulMatrix := proc(K::Matrix, height, nullSpace, porydokDiffRows, ord2)
   local uni, x2, j2;
   
   if ord2 <> 0 then
@@ -180,9 +189,9 @@ getUnimodulMatrix := proc(K::Matrix, height, nullSpace, porydok, ord2)
     uni := Matrix(LinearAlgebra:-ScalarMatrix(1, height));
     
     for x2 from 1 to height do
-        uni[ord2, x2] := coef(nullSpace, x2, ord2, porydok);
+        uni[ord2, x2] := coef(nullSpace, x2, ord2, porydokDiffRows);
     od;
-    #print("uni[ord2] = ",uni[ord2], "porydok = ", porydok);
+    #print("uni[ord2] = ",uni[ord2], "porydokDiffRows = ", porydokDiffRows);
     for x2 from 1 to height do
       for j2 from 1 to height do
         if uni[x2, j2] = 0 then
@@ -207,29 +216,6 @@ coef := proc(C::Vector, x2::integer, ord2::integer, porydok::vector)
   x1 := C[][x2]; 
   #x1 := C[][x2] / C[][ord2];
   
-  if x1=0 then
-    return 0;
-  else
-    n := porydok[ord2] - porydok[x2];
-    ode := diff(y(x), [`$`(x, n)]);
-    return LinearOperators[DEToOrePoly](x1*ode, y(x)); 
-  end if;
-end proc:
-
-# function coefForReverseConversation
-coefForReverseConversation := proc(C::Vector, x2::integer, ord2::integer, porydok::vector)
-  local i,j;
-  local x1, n, ode;
-  #print("nullSpace = ", C, "row x2 = ", x2,    "ord2 = ",ord2 ,"porydok = ",porydok);
-  #x1 := C[][x2]; 
-  #x1 := - C[][x2] / C[][ord2];
-
-  if x2 <> ord2 then
-    x1 := - C[][x2];
-  else
-    x1 := C[][ord2];
-  end if;
-
   if x1=0 then
     return OrePoly(0);
   else
@@ -339,6 +325,11 @@ outputRR := proc(opMatrix::Matrix)
   listResultOpMatrix := RR(opMatrix, [], 1 );
 
   #convertRR();
+
+  print(UID_opMatrix);
+
+  print(List_UIDs);
+  
   #saveAs("C:\\output.txt");
   #return listResultOpMatrix;
 end proc:
@@ -371,76 +362,34 @@ convertMatrixOrePolyToPoly := proc(matrix::Matrix) # delta #∂
   return map(proc (x) options operator, arrow; OreTools[Converters]:-FromOrePolyToPoly(x, delta) end proc, matrix);
 end proc:
 
-# function saveAs(path)
-saveAs:=proc(path)
-  local i,j;
+# filename := "C:\\Kursovay\\maple\\Git\\output.txt"
+# function saveAs(path) 
+SaveAs:=proc(filename)
+  local i,j, fd;
+  try
+    fd := fopen(filename,WRITE,TEXT);
+    writedata(fd,UID_opMatrix);
+    #writedata(!);
+    #ExportMatrix(!)
+  catch:
+    error "func SaveAs: wrong saved";
+  end try;
 
-  #writedata(!);
+  fclose(fd);
 end proc:
 
 ############################
 ##########_REPLACE_#########
 ############################
 
-# function estimations
-estimations := proc(K::Matrix, number::integer)
-  local polyFromK,i,j, estResult := true;
-  polyFromK := Matrix(op(1, K));
-  #for i from 1 to op(1, K)[1] do
-  #  for j from 1 to op(1, K)[2] do
-  #    polyFromK[i][j] := OreTools[Converters]:-FromOrePolyToPoly(K[i][j], 0);
-  #  end do;
-  #end do;
-  #print(K, polyFromK);
-  if (number = 1) then
-    estResult := estMax(K);
-  elif (number = 2) then
-    estResult := estMin(K);
-  elif (number = 3) then
-    estResult := estAddition(K);
-  end if;
-  #print(K,number);
-  return estResult;
+# function getHighDifferRow(list)
+getHighDifferRow := proc(list)
+  local i, ord;
+  ord := 0;
+    for i from 1 to nops(list) do
+      if nops(OreTools:-Normalize(list[i]))>ord then
+        ord := nops(OreTools:-Normalize(list[i]));
+      end if; 
+    end do; 
+  return ord - 1;
 end proc:
-
-#Estimations
-
-estMax := proc(K::Matrix)
-  return true;
-end proc:
-estMin := proc(K::Matrix)
-  return true;
-end proc:
-estAddition := proc(K::Matrix)
-  return true;
-end proc:
-
-getMatrix := proc()
-  return L1;
-end proc:
-
-getNewMatrix := proc()
-  return M1;
-end proc:
-
-func := proc()
-  local i,j;
-  global qwerty123;
-  qwerty123 := 0;
-  func1(0);
-end proc:
-
-func1 := proc(ir::integer)
-  global qwerty123;
-  if ir = 11 then
-    return;
-  else
-    qwerty123 := qwerty123 + ir;
-    func1(ir+1);
-  end if;
-end proc:
-
-
-
-
-
