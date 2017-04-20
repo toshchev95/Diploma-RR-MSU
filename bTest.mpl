@@ -275,9 +275,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
   if (LinearAlgebra:-Rank(A) < LinearAlgebra:-RowDimension(A)) then
    #  and (estimation) then
 
-    print(0);
     uniList:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
-    print(0);
     #print(uniList); #uni:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
 
     for nextNumberList from 1 to nops(uniList) do

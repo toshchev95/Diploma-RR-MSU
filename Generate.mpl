@@ -179,7 +179,7 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
   local front, i, globalList, listIndex, listValue,
         globalNullspace, operatorMatrix, globalDelta, highDifferChangingRow,
         countNonValue, sumDontUseRows, bUnimodular_1;
-  local j, k1, y1, vec, high, genStepenMainPoly, genCoeff;
+  local j, k1, y1, vec, eqHigh, genStepenMainPoly, genCoeff,high;
   global vectorUnEnableDiff;
   # \/_init_\/
   operatorMatrix := Matrix(size); # create empty matrix
@@ -188,10 +188,6 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
     globalDelta := Vector[row](size, 1);
     vectorUnEnableDiff := list();
     
-    ######
-    #front := Bug1; size := 4;
-    #highDiff := 4; highBound := 15;
-    ######
     # \/_processing_nullspace_\/
 #    if countVectors <> 0 then
 #      globalNullspace := [Vector[column](size, 1)];
@@ -201,8 +197,10 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
 #    end if;
     if countVectors <> 0 then
       globalNullspace := nullspaceWithoutDenom(front);
+      high := Generate(integer(range= 1 .. highDiff));
+      #print("high=",high);
       for i to nops(globalNullspace) do
-        high := getDiffEquation(highDiff);
+        eqHigh := getDiffEquation(high);
         vec:=globalNullspace[i];
         countNonValue := 0;
         listIndex := list();
@@ -222,6 +220,7 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
           # conditional about наличие строк операторной матрицы
           # high надо изменить на рандомный
           vectorUnEnableDiff := [op(vectorUnEnableDiff), high];
+          vectorUnEnableDiff := ListTools:-MakeUnique(vectorUnEnableDiff);
           if bUnimodular = true then
             bUnimodular_1 := false;
           else
@@ -234,10 +233,10 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
                 bUnimodular_1 := false;
               end if;
             y1 := listIndex[j];
-            print("j= ",j);
+            #print("j= ",j);
             for k1 to size do 
-              operatorMatrix[y1,k1] := LinearOperators[DEToOrePoly](front[y1,k1]*high, y(x)); # ??? = 0
-              genStepenMainPoly := Generate(integer(range= 0 .. highDiff-1));
+              operatorMatrix[y1,k1] := LinearOperators[DEToOrePoly](front[y1,k1]*eqHigh, y(x));
+              genStepenMainPoly := Generate(integer(range= 0 .. high-1));
               genCoeff := Generate(integer(range= -highBound .. highBound));
               operatorMatrix[y1,k1] := OreTools:-Add(generateOrePoly(genStepenMainPoly, highBound, true, genCoeff), operatorMatrix[y1,k1]);
             od;
@@ -246,10 +245,16 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
             end if;
           od;
         end if;
-  
+
+        if bUnimodular = true then
+          high := Generate(integer(range= 1 .. highDiff));
+        else
+          break;
+        end if;
       end do;
     end if;
-  
+    #print(vectorUnEnableDiff);
+
     # fill out 
     print(front);
     for i to size do
@@ -273,6 +278,7 @@ generateRowOrePoly := proc(vecFront, highBound, highDiff)
   size := Statistics:-Count(vecFront);
   sizeVec := size;
   stepenDiff := HasDiff(highDiff);
+  #print("stepenDiff=",stepenDiff);
   vectorRow := Vector[row](size);
   for i to size do
     
@@ -329,25 +335,26 @@ HasDiff := proc(highDiff)
   if (highDiff = size - 1) then
     error "List of values is fill!" 
   end if;
+  #print(vectorUnEnableDiff);
   if highDiff < sizeVec and size = highDiff then
     vectorUnEnableDiff := list();
     print("List of vectorUnEnableDiff values is fill!");
     print("List of vectorUnEnableDiff is clear. Fill out rows again!");
     print("There are equal orders differential in different rows.");
   end if;
-  while evalb(flag) do
+  while true do
     genValue := Generate(integer(range= 1 .. highDiff));
     if not(member(genValue, vectorUnEnableDiff)) then
-      flag := false;
       break;
     end if;
   od;
-
+  #print("genValue=",genValue);
   if genValue = -1 then
     error "func HasDiff: no exist right order of differential";
   end if;
 
   vectorUnEnableDiff := [op(vectorUnEnableDiff), genValue];
+  #print(vectorUnEnableDiff);
   return genValue;
 end proc:
 
