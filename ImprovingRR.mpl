@@ -1,12 +1,27 @@
+$include "C:\\Kursovay\\maple\\bTest.mpl"
+with(OreTools):
+with(LinearAlgebra):
+with(RandomTools):
+with(ArrayTools):
+with(ListTools):
+R := SetOreRing(x, 'differential'):
+
+# function printRankNullSpaceOpMatrix
+printRankNullSpaceOpMatrix := proc(opMatrix::Matrix) 
+  local m_front; m_front := getFrontMatrix(opMatrix); 
+  print("frontMatrix=", m_front); 
+  print("Rank = ", LinearAlgebra:-Rank(m_front)); 
+  print("NullSpace=", LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(m_front)));
+end proc:
 
 # function modifyRR
 modifyRR := proc(opMatrix::Matrix)
-  local A,B,i, saved,m_deg_rows;
+  local A,B,i, saved,nullSpace_indexRowOrderDiff;
   local vector_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff, uni;
   local height := op(1, opMatrix)[1], 
         width := op(1, opMatrix)[2],
         size := height;
-  global front, m_matrix, fullNullSpace;
+  global front, m_matrix, fullNullSpace,m_deg_rows;
 
   if height <> width then
     error "Func modifyRR: wrong scale opMatrix <- height =/= width";
@@ -25,14 +40,14 @@ modifyRR := proc(opMatrix::Matrix)
     m_deg_rows := vector(size, 0);
     fullNullSpace := LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(front));
 
+    for i to size do
+      m_deg_rows[i] := getHighDifferRow(m_matrix[i]);
+    end do;
+
     # issues modify
     nullSpace_indexRowOrderDiff := estimations();
     m_nullSpace := vector_indexRowOrderDiff[1];
     m_indexRowOrderDiff := vector_indexRowOrderDiff[2];
-
-    for i to size do
-      m_deg_rows[i] := getHighDifferRow(m_matrix[i]);
-    end do;
 
     uni := getUnimodulMatrix(m_matrix, height, m_nullSpace, m_deg_rows, m_indexRowOrderDiff);
     saved := getReverseLUMatrix(m_matrix, uni);
@@ -47,9 +62,9 @@ end proc:
 
 
 # function estimations
-estimations := proc();
+estimations := proc()
   local size,i,j, estResult, nullSpace_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff;
-  global front, m_matrix, fullNullSpace;
+  global front, m_matrix, fullNullSpace,m_deg_rows;
 
   size := Matrix(op(1, opMatrix));
 

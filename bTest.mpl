@@ -66,42 +66,37 @@ getListOfProblemUnimodulMatrix := proc(K::Matrix, numberOpMatrix::integer)
   local vlist := list(), 
         height := op(1, K)[1], 
         width := op(1, K)[2];
-  local front, nullSpace, fullNullSpace;
+  local front, nullSpace, fullNullSpace, pairNumberAndNullSpace;
   local count, problemList, listUniMatrixs, numberNullSpace := 1;
   global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
    
-  if height <> height then 
+  if height <> width then 
     error "not square matrix!" 
   else
     front := getFrontMatrix(K);
   end if;
-  #print("front: ", front);
   fullNullSpace := LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(front));
   #print(Statistics:-Count([op(e)]));
   count := 1;
   problemList := list();
-  try
 
-    while member(fullNullSpace[count], fullNullSpace) do 
+    for count to nops(fullNullSpace) do 
       #инструкции 
       nullSpace := fullNullSpace[count];
       nullSpace := map(proc (x, y) options operator, arrow; x*y end proc, nullSpace, lcm(seq(x, `in`(x, map(denom, nullSpace)))));
       nullSpace := simplify(nullSpace);
 
       # UID
-      UID_vector := [op(UID_vector), [numberOpMatrix, nullSpace]];
+      pairNumberAndNullSpace := [numberOpMatrix, nullSpace];
+      UID_vector := [op(UID_vector), pairNumberAndNullSpace];
 
       listUniMatrixs := getListUnimodulMatrix(K, nullSpace, numberOpMatrix);
-      problemList := [op(problemList), [nullSpace, listUniMatrixs]];
+      pairNumberAndNullSpace := [nullSpace, listUniMatrixs];
+      problemList := [op(problemList), pairNumberAndNullSpace];
       #problemList := [op(problemList), op(listUniMatrixs)];
-
-      count := count + 1;
 
       #print("=============================================================");
     end do;
-    print("QA END1");
-  catch:
-  end try;
   
   if problemList = list() then
     error "problemList is empty";
@@ -117,7 +112,7 @@ end proc:
 ##############################
 # function getListUnimodulMatrix
 getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector, numberOpMatrix::integer) 
-  local x2, indexNullSpace, ord2, j,i,j2, posX, ord1, ordTemp;
+  local x2, indexNullSpace, ord2, j,i,j2, posX, ord1, ordTemp,tripleParameters;
 
   # init
   local vlist := list(), 
@@ -174,7 +169,8 @@ getListUnimodulMatrix := proc(K::Matrix, nullSpace::Vector, numberOpMatrix::inte
     vlist := [op(vlist), uni];
 
     # UID
-    UID_uniMatrix := [op(UID_uniMatrix), [numberOpMatrix, nullSpace, uni]];
+    tripleParameters := [numberOpMatrix, nullSpace, uni];
+    UID_uniMatrix := [op(UID_uniMatrix), tripleParameters];
   od;
  
   return vlist;
@@ -281,8 +277,8 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
 
     print(0);
     uniList:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
-    #uni:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
-    #print(uniList);
+    print(0);
+    #print(uniList); #uni:= getListOfProblemUnimodulMatrix(opMatrix, numberOpMatrix);
 
     for nextNumberList from 1 to nops(uniList) do
 
@@ -291,7 +287,9 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
       for nextNumber from 1 to Statistics:-Count(uni) do
       
         saved := getReverseLUMatrix(opMatrix, uni[nextNumber]);
-  
+        # Вычислим по каждой строке матрицы GCD и разделим на него
+        saved := matrixOreWithoutGCD(saved);
+
         # UID
         UID_opMatrix := [op(UID_opMatrix), saved];
         List_UIDs := [op(List_UIDs), [numberOpMatrix, uniList[nextNumberList][1], uni[nextNumber], nops(UID_opMatrix)]];
@@ -324,12 +322,12 @@ outputRR := proc(opMatrix::Matrix)
   UID_opMatrix := [op(UID_opMatrix), opMatrix];
   listResultOpMatrix := RR(opMatrix, [], 1 );
 
-  #convertRR();
+  convertRR();
 
   print(UID_opMatrix);
 
   print(List_UIDs);
-  
+
   #saveAs("C:\\output.txt");
   #return listResultOpMatrix;
 end proc:
@@ -392,4 +390,49 @@ getHighDifferRow := proc(list)
       end if; 
     end do; 
   return ord - 1;
+end proc:
+
+# function matrixOreWithoutGCD
+matrixOreWithoutGCD := proc(opMatrix::Matrix)
+  local i, vector, size, value_gcd;
+  size := LinearAlgebra:-RowDimension(opMatrix);
+
+  for i to size do
+    vector := opMatrix[i];
+    value_gcd := eqGCDinListOre(vector);
+    if value_gcd <> 1 then
+      opMatrix[i] := map(proc (ore) options operator, arrow; OrePoly(seq(simplify(y/value_gcd), `in`(y, ore))) end proc, convert(vector,Vector[row]));
+    end;
+  end do;
+  return opMatrix;
+end proc:
+
+# function eqGCDinListOre
+eqGCDinListOre := proc(gcdList)
+  local i, m_gcd,check_gcd; 
+  m_gcd := GCDinOrePoly(gcdList[1]);
+
+  for i from 2 to nops(gcdList) do
+    check_gcd := GCDinOrePoly(gcdList[i]);
+    m_gcd := gcd(m_gcd, check_gcd);
+    if m_gcd = 1 then
+      return 1;
+    end if;
+  end do;
+
+  return m_gcd;
+end proc:
+
+# function GCDinOrePoly
+GCDinOrePoly := proc(gcdOre) 
+  local i, m_gcd, m_gcdList; 
+  
+  m_gcdList := [seq(x, `in`(x, gcdOre))]; 
+  
+  m_gcd := m_gcdList[1]; 
+  for i from 2 to nops(m_gcdList) do 
+    m_gcd := gcd(m_gcd, m_gcdList[i]);
+  end do; 
+
+  return m_gcd;
 end proc:
