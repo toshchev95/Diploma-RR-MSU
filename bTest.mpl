@@ -322,14 +322,16 @@ outputRR := proc(opMatrix::Matrix)
 
   convertRR();
 
-  print(UID_opMatrix);
+  #print(UID_opMatrix);
+  printUID_opMatrix();
 
   print(List_UIDs);
+
+  graphVisualisation(createListEdgesFromNumberOpMatrix());
 
   #saveAs("C:\\output.txt");
   #return listResultOpMatrix;
 end proc:
-
 
 # function convertRR
 convertRR:= proc()
@@ -356,6 +358,38 @@ end proc:
 # function convertMatrixOrePolyToPoly
 convertMatrixOrePolyToPoly := proc(matrix::Matrix) # delta #∂
   return map(proc (x) options operator, arrow; OreTools[Converters]:-FromOrePolyToPoly(x, delta) end proc, matrix);
+end proc:
+
+# function printUID_opMatrix
+printUID_opMatrix := proc()
+  local i, size := nops(UID_opMatrix);
+  global UID_opMatrix;
+  for i to size do
+    print(UID_opMatrix[i]);
+  end do;
+#  for i to size by 2 do #    if size - i > 1 then #      print(UID_opMatrix[i],UID_opMatrix[i+1]);
+#    else #      print(UID_opMatrix[i]); #    end if; #  end do;
+end proc:
+
+# function createListEdgesFromNumberOpMatrix
+createListEdgesFromNumberOpMatrix := proc()
+  local i,UIDs, listEdges, edge;
+  global List_UIDs;
+
+  listEdges := list();
+  for i to nops(List_UIDs) do
+    UIDs := List_UIDs[i];
+    edge := [UIDs[1],UIDs[4]];
+    listEdges := [op(listEdges), edge];
+  end do;
+
+  return listEdges;
+end proc:
+
+# function graphVisualisation(list)
+graphVisualisation := proc (listEdges) 
+  local graph := GraphTheory:-Graph(undirected, convert(listEdges, set)); 
+  GraphTheory:-DrawGraph(graph, style = tree, root = 1);
 end proc:
 
 # filename := "C:\\Kursovay\\maple\\Git\\output.txt"
@@ -433,4 +467,20 @@ GCDinOrePoly := proc(gcdOre)
   end do; 
 
   return m_gcd;
+end proc:
+
+# function failReverseOrdersPoly # Не получается изменить порядок слагаемых
+failReverseOrdersPoly := proc(reverPoly)
+  local i, size_terms,termsPoly, 
+    expression:= 0; 
+
+  termsPoly := ListTools:-Reverse([seq(x, `in`(x, reverPoly))]);
+  expression := termsPoly[1]; 
+  size_terms := nops(termsPoly); 
+
+  for i from 2 to size_terms do 
+    expression := expression + termsPoly[i];
+  end do; 
+  
+  return expression;
 end proc:

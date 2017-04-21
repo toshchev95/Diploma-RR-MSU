@@ -44,8 +44,12 @@ frontGenerate := proc(size, countVectors, highBound::integer, bNullVectors)
   end if;
 
   # init
-  maxStepenPoly := 2;
-  delta := 1.0 / (countVectors + 1);  
+  maxStepenPoly := 1;
+  if size > 3 then
+    delta := 1.0 / countVectors;  
+  else
+    delta := 1.0 / (countVectors + 1);  
+  end if;
   front := RandomMatrix(size, density = delta, generator = 0 .. 1);
 
   for i to size do
@@ -74,7 +78,7 @@ frontGenerate := proc(size, countVectors, highBound::integer, bNullVectors)
       od;
     od;
   end do;
-
+  print(countVectors,"=/=",size - LinearAlgebra:-Rank(front));
   return front;
 end proc:
 
@@ -377,7 +381,7 @@ end proc:
 #  Операторная матрица (дифференциальная)
 
 # function GenerateMatrixRR
-GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::integer) option overload; #counter_strings
+GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalMatrix)  #counter_vectors::integer) option overload; #counter_strings
   local i, m_Gen, m_prevGen, m_stepenPoly, m_highDiff, m_UniMatrix, two_vectors,
     m_indexMaxDiffOrderInList,m_getMatrix, bFirstIterWhile;
   global m_vector_LZ, m_list_MaxDiffOrder;
@@ -385,7 +389,11 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer)      #counter_vectors::i
   # Сначала генерируем матрицу, которая невырождена (/= 0, ранк == размера)
   m_highDiff := highDiff;
 
-  m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
+  if bOptionalMatrix = true then
+    m_Gen := optionalMatrix;
+  else
+    m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
+  end if;
   m_prevGen := m_Gen;
   print(m_Gen);#, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
 

@@ -21,7 +21,7 @@ modifyRR := proc(opMatrix::Matrix)
   local height := op(1, opMatrix)[1], 
         width := op(1, opMatrix)[2],
         size := height;
-  global front, m_matrix, fullNullSpace,m_deg_rows;
+  global front, m_matrix, fullNullSpace,m_deg_rows, m_infoOnMatrix;
 
   if height <> width then
     error "Func modifyRR: wrong scale opMatrix <- height =/= width";
@@ -44,6 +44,10 @@ modifyRR := proc(opMatrix::Matrix)
       m_deg_rows[i] := getHighDifferRow(m_matrix[i]);
     end do;
 
+    # Info
+    m_infoOnMatrix := list();
+    getInfoOnOpMatrix();
+
     # issues modify
     nullSpace_indexRowOrderDiff := estimations();
     m_nullSpace := vector_indexRowOrderDiff[1];
@@ -60,6 +64,36 @@ modifyRR := proc(opMatrix::Matrix)
   return m_matrix;
 end proc:
 
+
+
+# Функция, собирающая все данные операторной матрицы, 
+# строк унимод и полученных на следующем шаге матриц
+
+# function getInfoOnOpMatrix
+getInfoOnOpMatrix := proc()
+  local i,j, listNumberRowsForUniMatrix, numbersRowsNullSpace, 
+    listNumbersRowsColsInfo;
+  global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, nullSpace;
+
+  # Список номеров строк для неоднозначности для получения унимод матриц
+  listNumberRowsForUniMatrix := list();
+  # Список номеров строк, столбцов операторной матрицы, по к. есть неоднозначности uniMatrix
+  listNumbersRowsColsInfo := list();
+  for i to nops(fullNullSpace) do
+    nullSpace := fullNullSpace[i];
+    numbersRowsNullSpace := list();
+    for j to nops(nullSpace) do
+      if nullSpace[j] <> 0 then
+        numbersRowsNullSpace := [op(numbersRowsNullSpace),j];
+        listNumbersRowsColsInfo := [op(listNumbersRowsColsInfo),j];
+      end if;
+    end do;
+    listNumberRowsForUniMatrix := [op(listNumberRowsForUniMatrix),numbersRowsNullSpace];
+  end do;
+  listNumbersRowsColsInfo := ListTools:-MakeUnique(listNumbersRowsColsInfo);
+
+  # Вычислим матрицу, где элемент 
+end proc:
 
 # function estimations
 estimations := proc()
