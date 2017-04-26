@@ -121,7 +121,7 @@ matrixOreWithoutDenom := proc(opMatrix::Matrix)
 
   for i to size do
     vector := opMatrix[i];
-    opMatrix[i] := eqLCMinMatrix(vector);
+    opMatrix[i] := eqLCMinMatrix(convert(vector,list));
   end do;
   return opMatrix;
 end proc:
@@ -134,11 +134,14 @@ eqLCMinMatrix := proc(oreListList)
 
   m_eqLCM := 1; 
   for i to nops(m_listLCM) do 
-    m_eqLCM := m_listLCM[i]*m_eqLCM; 
+    m_eqLCM := lcm(m_listLCM[i]*m_eqLCM); 
   end do; 
-  rowMatrix := map(proc (ore) options operator, arrow; OrePoly(seq(x, `in`(x, ore))*m_eqLCM) end proc, oreListList); 
+  #print(m_eqLCM);
+  #print("before",oreListList);
+  rowMatrix := map(proc (ore) options operator, arrow; OrePoly(seq( simplify(expand(x)*m_eqLCM) , `in`(x, ore))) end proc, oreListList); 
+  #print("afterq",rowMatrix);
 
-  return rowMatrix;
+  return convert(rowMatrix, Vector[row]);
 end proc:
 
 # function nullspaceWithoutDenom without denominator (знаменатилей)
@@ -394,6 +397,8 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalM
   else
     m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
   end if;
+  m_Gen := matrixOreWithoutDenom(m_Gen);
+
   m_prevGen := m_Gen;
   print(m_Gen);#, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
 

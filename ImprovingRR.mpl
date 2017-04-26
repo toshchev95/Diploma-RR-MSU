@@ -19,9 +19,9 @@ modifyRR := proc(opMatrix::Matrix)
   local A,B,i, saved,nullSpace_indexRowOrderDiff, firstListNumberHighDiffForUniMat;
   local vector_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff, uni;
   local height := op(1, opMatrix)[1], 
-        width := op(1, opMatrix)[2],
-        size := height;
-  global front, m_matrix, fullNullSpace,m_deg_rows, m_infoOnMatrix, m_matrixInfo;
+        width := op(1, opMatrix)[2];
+  global front, m_matrix, fullNullSpace,m_deg_rows, m_infoOnMatrix, m_matrixInfo,
+    size := height;
 
   if height <> width then
     error "Func modifyRR: wrong scale opMatrix <- height =/= width";
@@ -79,11 +79,10 @@ end proc:
 # function getInfoOnOpMatrix
 getInfoOnOpMatrix := proc()
   local i,j, listNumberRowsForUniMatrix, numbersRowsNullSpace, temp, maxOrd, highDiffMatrix,
-    listNumbersRowsColsInfo, size, listOfOrderDiff, listOfPoly, listEmpty, listOrderDiffRowUniMat;
-  global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, # global for modifyRR()
+    listNumbersRowsColsInfo, listOfOrderDiff, listOfPoly, listEmpty, listOrderDiffRowUniMat;
+  global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, size, # global for modifyRR()
     m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix, nullSpace;
 
-  size := LinearAlgebra:-RowDimension(m_matrix);
   highDiffMatrix := max(m_deg_rows);
   maxOrd := 0;
 
@@ -103,9 +102,10 @@ getInfoOnOpMatrix := proc()
   print("listNumberRowsForUniMatrix=",listNumberRowsForUniMatrix);
   print("listNumbersRowsColsInfo=",listNumbersRowsColsInfo);
 
-  # Вычислим матрицу, где элемент содержит инфу об OrePoly в виде 2-х списков:
+  # Вычислим матрицу, где каждый элемент содержит инфу об OrePoly в виде 2-х списков:
   # listOfOrderDiff, listOfPoly
-  listEmpty := convert(vector(highDiffMatrix,0),list); # [0,0,...,0]
+  # + 1 за нулевой порядок дифференцирования
+  listEmpty := convert(vector(highDiffMatrix + 1,0),list); # [0,0,...,0]
 
   for i to size do
     for j to size do # Списки можно перевернуть (????)
@@ -154,6 +154,9 @@ getInfoOnOpMatrix := proc()
     # if member(i,listNumbersRowsColsInfo) then
     # end if;
   end do;
+
+  # m_infoOnMatrix - структура, содержащая доп инфу
+  m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix];
 
 end proc:
 
@@ -223,10 +226,8 @@ end proc:
 
 # function estimations
 estimations := proc()
-  local size,i,j, estResult, nullSpace_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff;
-  global front, m_matrix, fullNullSpace,m_deg_rows;
-
-  size := Matrix(op(1, opMatrix));
+  local i,j, estResult, nullSpace_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff;
+  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
 
   # обработка всех имеющихся параметров
   # process();
@@ -241,7 +242,7 @@ end proc:
 # function selectNullspace
 selectNullspace := proc()
   local nullSpace, i;
-  global front, m_matrix, fullNullSpace;
+  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
 
 
   return nullSpace;
@@ -251,7 +252,7 @@ end proc:
 # function selectIndexDiffOrderRows
 selectIndexDiffOrderRows := proc()
   local m_index, i;
-  global front, m_matrix, fullNullSpace;
+  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
 
 
   return m_index;

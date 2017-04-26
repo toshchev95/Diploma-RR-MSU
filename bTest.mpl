@@ -365,7 +365,7 @@ printUID_opMatrix := proc()
   local i, size := nops(UID_opMatrix);
   global UID_opMatrix;
   for i to size do
-    print(UID_opMatrix[i]);
+    print(i,UID_opMatrix[i]);
   end do;
 #  for i to size by 2 do #    if size - i > 1 then #      print(UID_opMatrix[i],UID_opMatrix[i+1]);
 #    else #      print(UID_opMatrix[i]); #    end if; #  end do;
