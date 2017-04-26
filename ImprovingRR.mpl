@@ -79,15 +79,15 @@ end proc:
 # function getInfoOnOpMatrix
 getInfoOnOpMatrix := proc()
   local i,j, listNumberRowsForUniMatrix, numbersRowsNullSpace, temp, maxOrd, highDiffMatrix,
-    listNumbersRowsColsInfo, size, listOfOrderDiff, listOfPoly;
-  global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, nullSpace, m_matrixInfo,
-    m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix;
+    listNumbersRowsColsInfo, size, listOfOrderDiff, listOfPoly, listEmpty, listOrderDiffRowUniMat;
+  global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, # global for modifyRR()
+    m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix, nullSpace;
 
   size := LinearAlgebra:-RowDimension(m_matrix);
   highDiffMatrix := max(m_deg_rows);
   maxOrd := 0;
 
-  # Список номеров строк для неоднозначности для получения унимод матриц
+  # Список номеров строк для неоднозначности при получении унимод матриц
   listNumberRowsForUniMatrix := list(); # [[1,2],[3,4]]
   # Список номеров строк, столбцов операторной матрицы, по к. есть неоднозначности uniMatrix
   listNumbersRowsColsInfo := list(); # [1,2,3,4]
@@ -150,7 +150,7 @@ getInfoOnOpMatrix := proc()
   m_listRowsInfoUniMatrix := convert(vector(size,0),list);
   for i to size do
     listOrderDiffRowUniMat := convert(vector(size,m_deg_rows[i]),list) - m_deg_rows;
-    m_listRowsInfoUniMatrix[i]:= [listOrderDiffRowUniMat, max(listOrderDiffRowUniMat)]; # , info_2, info_3, ...]
+    m_listRowsInfoUniMatrix[i]:= [listOrderDiffRowUniMat, max(listOrderDiffRowUniMat)];       # , info_2, info_3, ...]
     # if member(i,listNumbersRowsColsInfo) then
     # end if;
   end do;
@@ -160,17 +160,21 @@ end proc:
 # function getListNumberHighDiffForUniMat
 getListNumberHighDiffForUniMat := proc(nullSpace, m_deg_rows)
   local j, numbersRowsNullSpace, maxOrd;
-    numbersRowsNullSpace := list();
-    for j to nops(nullSpace) do
-      if nullSpace[j] <> 0 then
-        if m_deg_rows[j] > maxOrd then
-          maxOrd := m_deg_rows[j];
-          numbersRowsNullSpace := [j];
-        else if m_deg_rows[j] = maxOrd then
-          numbersRowsNullSpace := [op(numbersRowsNullSpace),j];
-        end if;
+  
+  numbersRowsNullSpace := list();
+  for j to nops(nullSpace) do
+    if nullSpace[j] <> 0 then
+      if m_deg_rows[j] > maxOrd then
+        maxOrd := m_deg_rows[j];
+        numbersRowsNullSpace := [j];
+      elif m_deg_rows[j] = maxOrd then
+        numbersRowsNullSpace := [op(numbersRowsNullSpace),j];
       end if;
-    end do;
+    end if;
+
+  end do;
+
+  return numbersRowsNullSpace;
 end proc:
 
 # function sumListDifferentLength
@@ -259,13 +263,13 @@ end proc:
 
 # function MultiplyOrePolyOnListOre
 MultiplyOrePolyOnListOre := proc (orePoly, listOrePoly) 
-  return [seq(OreTools:-Multiply(orePoly, polyOre, R), `in`(polyOre, listOrePoly))] 
-end proc; 
+  return [seq(OreTools:-Multiply(orePoly, polyOre, R), `in`(polyOre, listOrePoly))];
+end proc: 
 
 # function MultiplyPolyOnListOre
 MultiplyPolyOnListOre := proc (poly, listOrePoly) 
-  return [seq(OreTools:-Multiply(OrePoly(poly), polyOre, R), `in`(polyOre, listOrePoly))] 
-end proc; 
+  return [seq(OreTools:-Multiply(OrePoly(poly), polyOre, R), `in`(polyOre, listOrePoly))];
+end proc: 
 
 # function AddListsOrePoly
 AddListsOrePoly := proc (listA, listB) 
@@ -274,8 +278,8 @@ AddListsOrePoly := proc (listA, listB)
     listSum := [op(listSum), OreTools:-Add(listA[i], listB[i])]; 
   end do; 
 
-  return listSum 
-end proc; 
+  return listSum;
+end proc:
 
 # function getReplaceMatrixRR
 getReplaceMatrixRR := proc (opMatrix, height, nullSpace, m_deg_rows, m_indexRowOrderDiff) 
@@ -297,7 +301,7 @@ getReplaceMatrixRR := proc (opMatrix, height, nullSpace, m_deg_rows, m_indexRowO
   end do; 
   
   m_matrix[m_indexRowOrderDiff] := convert(rowResultSum, Vector); 
-  return m_matrix 
+  return m_matrix;
 end proc:
 
 # function getUnitMatrix
@@ -307,12 +311,12 @@ getUnitMatrix := proc (size)
   for i to size do 
     for j to size do 
       if i <> j then 
-        matrix[i, j] := OrePoly(0) 
+        matrix[i, j] := OrePoly(0);
       else 
-        matrix[i, j] := OrePoly(1) 
+        matrix[i, j] := OrePoly(1);
       end if; 
     end do; 
   end do; 
   
-  return matrix 
+  return matrix;
 end proc:
