@@ -246,12 +246,9 @@ estimations := proc()
       # fill out -> tempPar_s[4]
       tempPar_s := [nullSpace, numberRowForNullSpace, newRow, getHighDifferRow(newRow)];
 
-
-
       listPar_s := [op(listPar_s), tempPar_s];
     end do;
   end do;
-
 
   betterParameters := cmpParameters(listPar_s[1], listPar_s[2]);
   for i from 3 to nops(listPar_s) do
@@ -339,13 +336,13 @@ end proc:
 
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
-  local i,j, m_RowsInfo, m_ColsInfo;
+  local i,j, m_RowsInfoA, m_RowsInfoB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
     indexA, indexB;
 
   # a) сумма всех порядков дифференцирования (<)
-  m_RowsInfo := m_infoOnMatrix[1];
-  m_ColsInfo := m_infoOnMatrix[2];  
+  m_RowsInfoA := getNonNullList(m_infoOnMatrix[indexB]);
+  m_RowsInfoB := getNonNullList(m_infoOnMatrix[indexA]);
 
   # b) кол-во термов порядков диф-ния (>)
   # c) степени у множителей коэффициентов полиномов Оре (<)
@@ -356,8 +353,83 @@ compareRowsOpMatrx := proc(rowA, rowB)
   return temp;
 end proc:
 
+# function compareOrePoly
+compareOrePoly := proc (oreA, oreB) 
+  local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB, 
+        numberDiffA, numberDiffB, sumPlusCoeffsA, sumPlusCoeffsB; 
+  listA := [seq(x, `in`(x, oreA))]; 
+  listB := [seq(x, `in`(x, oreB))]; 
+  sizeA := nops(listA); 
+  sizeB := nops(listB); 
+  sumPolyA := sum('listA[k]', k = 1 .. sizeA); 
+  sumPolyB := sum('listB[k]', k = 1 .. sizeB); 
+
+  listIsDiffA := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listA); 
+  listIsDiffB := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listB); 
+  numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA); 
+  numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB); 
+
+  sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA)))[k]', k = 1 .. nops(sumPolyA)); 
+  sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB)))[k]', k = 1 .. nops(sumPolyB)); 
+
+  if nops(oreA) < nops(oreB) then 
+    return true 
+  elif nops(oreB) < nops(oreA) then 
+    return false 
+  elif numberDiffA < nuberDiffB then 
+    return true 
+  elif nuberDiffB < numberDiffA then 
+    return false 
+  elif degree(sumPolyA) < degree(sumPolyB) then 
+    return true 
+  elif degree(sumPolyB) < degree(sumPolyA) then 
+    return false 
+  elif nops(sumPolyA) < nops(sumPolyB) then 
+    return true 
+  elif nops(sumPolyB) < nops(sumPolyA) then 
+    return false 
+  elif sumPlusCoeffsA < sumPlusCoeffsB then 
+    return true 
+  elif sumPlusCoeffsB < sumPlusCoeffsA then 
+    return false 
+  else 
+    # using sumListDifferentLength(), coeffFull()
+    print("In func compareOrePoly: else"); 
+    return true 
+  end if 
+end proc:
+
+
+# function coeffFull
+coeffFull := proc (poly) 
+  local i, listCoeff; 
+  listCoeff := list(); 
+  for i from 0 to degree(poly) do 
+    listCoeff := [op(listCoeff), coeff(poly, x, i)];
+  end do; 
+
+  return listCoeff;
+end proc:
+
+
+
+getNonNullList := proc (listA) 
+  local i, tempList, countZero; 
+  countZero := 0; 
+  tempList := ListTools:-Reverse(listA); 
+  for i to nops(listA) do 
+    if tempList[i] = 0 then 
+      countZero := countZero+1; 
+    else 
+      break;
+    end if;
+  end do; 
+
+  return listA[1 .. nops(listA)-countZero]; 
+end proc:
+
 ##########################################
-###### Init functions RR algorithm ######
+###### Init functions RR algorithm #######
 ##########################################
 
 # function MultiplyOrePolyOnListOre
