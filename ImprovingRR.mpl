@@ -336,21 +336,21 @@ end proc:
 
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
-  local i,j, m_RowsInfoA, m_RowsInfoB;
+  local i,j, m_resRowInfoA, m_resRowInfoB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
     indexA, indexB;
 
-  # a) сумма всех порядков дифференцирования (<)
-  m_RowsInfoA := getNonNullList(m_infoOnMatrix[indexB]);
-  m_RowsInfoB := getNonNullList(m_infoOnMatrix[indexA]);
+  # m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
+  m_resRowInfoA := getNonNullList(m_infoOnMatrix[1][indexB]);
+  m_resRowInfoB := getNonNullList(m_infoOnMatrix[1][indexA]);
 
+  # a) сумма всех порядков дифференцирования (<)
   # b) кол-во термов порядков диф-ния (>)
   # c) степени у множителей коэффициентов полиномов Оре (<)
   # d) кол-во термов f(x) (<)
   # e) числа у множителей (<)
   
-  temp := A;
-  return temp;
+  return compareOrePoly(m_resRowInfoA,m_resRowInfoB);
 end proc:
 
 # function compareOrePoly
