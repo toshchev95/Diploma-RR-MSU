@@ -156,7 +156,7 @@ getInfoOnOpMatrix := proc()
   end do;
 
   # m_infoOnMatrix - структура, содержащая доп инфу
-  m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix];
+  m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
 
 end proc:
 
@@ -219,43 +219,141 @@ getInfoMatrixCol := proc(Col)
 end proc:
 
 
-
-
-#Optional estimations are here!
-
+##################################
+# Optional estimations are here! #
+##################################
 
 # function estimations
 estimations := proc()
-  local i,j, estResult, nullSpace_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff;
+  local i,j, 
+    m_nullSpace, m_indexRowOrderDiff, listNumberRowsForUniMatrix, newRow, listNumberRowsForNullSpace, numberRowForNullSpace,
+    nullSpace, listPar_s, tempPar_s, betterParameters;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
 
-  # обработка всех имеющихся параметров
-  # process();
-  # выбор вектора ЛЗ и индекс максимального дифференциального оператора
-  # m_nullSpace := selectNullspace();
-  # m_indexRowOrderDiff := selectIndexDiffOrderRows();
+  listNumberRowsForUniMatrix := m_infoOnMatrix[4];
 
-  nullSpace_indexRowOrderDiff := [m_nullSpace, m_indexRowOrderDiff];
-  return nullSpace_indexRowOrderDiff;
+  # Сформируем список параметров спец образом, по которым существуют разветвления.
+  # в последовательном порядке расположения nullSpace в fullNullSpace и номеров строк HighOrderDiff
+  listPar_s := list();
+
+  for i to nops(fullNullSpace) do
+    listNumberRowsForNullSpace := listNumberRowsForUniMatrix[i];
+    nullSpace := fullNullSpace[i];
+    for j to nops(listNumberRowsForNullSpace) do
+      numberRowForNullSpace := listNumberRowsForNullSpace[j];
+      newRow := getReplaceRowMatrixRR(opMatrix, size, nullSpace, m_deg_rows, numberRowForNullSpace);
+
+      # fill out -> tempPar_s[4]
+      tempPar_s := [nullSpace, numberRowForNullSpace, newRow, getHighDifferRow(newRow)];
+
+
+
+      listPar_s := [op(listPar_s), tempPar_s];
+    end do;
+  end do;
+
+
+  betterParameters := cmpParameters(listPar_s[1], listPar_s[2]);
+  for i from 3 to nops(listPar_s) do
+    betterParameters := cmpParameters(betterParameters, listPar_s[i]);
+  end do;
+
+  # Result
+  m_nullSpace := betterParameters[1];
+  m_indexRowOrderDiff := betterParameters[2];
+  return [m_nullSpace, m_indexRowOrderDiff];
 end proc:
 
-# function selectNullspace
-selectNullspace := proc()
-  local nullSpace, i;
-  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
+# function cmpParameters ( listParameters := [nullSpace, numberRowForNullSpace, newRow, getHighDifferRow(newRow)] )
+cmpParameters := proc(listPar_A, listPar_B)
+  local m_listRowsInfoUniMatrix,listOrderDiffRowUniMat,
+    listPar_temp, bCompareRows, polyNullSpace_A, polyNullSpace_B;
+  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
+    indexA, indexB;
+  
+  m_listRowsInfoUniMatrix := m_infoOnMatrix[3]; # [listOrderDiffRowUniMat, max(listOrderDiffRowUniMat)];
+  listOrderDiffRowUniMat := m_listRowsInfoUniMatrix[1];
 
+    listPar_temp := [0,0,0,0]; # (!):(delete)
+    bCompareRows := false;
+    indexA := listPar_A[2];
+    indexB := listPar_B[2];
 
-  return nullSpace;
+  # Будем применять эвристики по убыванию
+  # if then elif then elif then else end if;
+  # 1) Выберем min( delta(i) + HighOrderDiff(opMatrix in non-zero row's nullSpace) )
+  # Выберем минимальную сумму разности порядков дифференцирования по выбранной строке и 
+  # максимальный порядок дифф. в строках, кот. соответствуют не нулевые значения nullSpace
+  # При выборе учесть, что в новой строке HighOrderDiff м.б. = 0.
+  # (!) Note: достаточно вычислить новую строку
+  if listPar_A[3] <> listPar_A[3] then
+
+    polyNullSpace_A := listPar_A[1][indexA];
+    polyNullSpace_B := listPar_B[1][indexB];
+
+    # maxHighDiffOrder
+    if listPar_A[4] < listPar_B[4] then
+      listPar_temp := listPar_A;
+    elif listPar_A[4] > listPar_B[4] then
+      listPar_temp := listPar_B;
+    
+    # nops polyNullSpace
+    elif nops(polyNullSpace_A) < nops(polyNullSpace_B) then # # listPar_A[4] == listPar_B[4]
+      listPar_temp := listPar_A;
+    elif nops(polyNullSpace_A) > nops(polyNullSpace_B) then
+      listPar_temp := listPar_B;
+
+    # # degree polyNullSpace
+    # elif degree(polyNullSpace_A) < degree(polyNullSpace_B) then
+    #   listPar_temp := listPar_A;
+    # elif degree(polyNullSpace_A) > degree(polyNullSpace_B) then
+    #   listPar_temp := listPar_B;
+
+    elif indexA = indexB then
+      if compareRowsOpMatrx(listPar_A[3], listPar_B[3]) = true then
+        listPar_temp := listPar_A;
+      else
+        listPar_temp := listPar_B;
+      end if;
+    else 
+      bCompareRows := true;
+    end if;
+
+  # 2) Если на шаге 1) все значения равны, то смотри на строки в оп. матрицах,
+  # отличающиеся между собой параметрами исследуемых строк: (по убыванию)
+  else # listPar_A[3] == listPar_B[3]
+    bCompareRows := true;
+  end if;
+
+  if bCompareRows = true then
+    if compareRowsOpMatrx(m_matrix[indexB], m_matrix[indexA]) = true then
+      listPar_temp := listPar_A;
+    else
+      listPar_temp := listPar_B;
+    end if;
+  
+  end if;
+
+  return listPar_temp;
 end proc:
 
+# function compareRowsOpMatrx (rowA, rowB)
+compareRowsOpMatrx := proc(rowA, rowB)
+  local i,j, m_RowsInfo, m_ColsInfo;
+  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
+    indexA, indexB;
 
-# function selectIndexDiffOrderRows
-selectIndexDiffOrderRows := proc()
-  local m_index, i;
-  global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
+  # a) сумма всех порядков дифференцирования (<)
+  m_RowsInfo := m_infoOnMatrix[1];
+  m_ColsInfo := m_infoOnMatrix[2];  
 
-
-  return m_index;
+  # b) кол-во термов порядков диф-ния (>)
+  # c) степени у множителей коэффициентов полиномов Оре (<)
+  # d) кол-во термов f(x) (<)
+  # e) числа у множителей (<)
+  
+  temp := A;
+  return temp;
 end proc:
 
 ##########################################
@@ -284,6 +382,16 @@ end proc:
 
 # function getReplaceMatrixRR
 getReplaceMatrixRR := proc (opMatrix, height, nullSpace, m_deg_rows, m_indexRowOrderDiff) 
+  local m_matrix; 
+
+  m_matrix := opMatrix; 
+  m_matrix[m_indexRowOrderDiff] := getReplaceRowMatrixRR(opMatrix, height, 
+                      nullSpace, m_deg_rows, m_indexRowOrderDiff) ;
+  return m_matrix;
+end proc:
+
+# function getReplaceRowMatrixRR
+getReplaceRowMatrixRR := proc(opMatrix, height, nullSpace, m_deg_rows, m_indexRowOrderDiff) 
   local i, j, m_matrix, size, poly, rowResultSum, row, oreDiffOrder, polyOre; 
   m_matrix := opMatrix; 
   size := height; 
@@ -301,8 +409,7 @@ getReplaceMatrixRR := proc (opMatrix, height, nullSpace, m_deg_rows, m_indexRowO
     end if; 
   end do; 
   
-  m_matrix[m_indexRowOrderDiff] := convert(rowResultSum, Vector); 
-  return m_matrix;
+  return convert(rowResultSum, Vector); 
 end proc:
 
 # function getUnitMatrix
