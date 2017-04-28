@@ -374,10 +374,11 @@ end proc:
 
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
-  local i,j, m_resRowInfoA, m_resRowInfoB, bResult, 
-    countRowA, countRowB, bMatrix, bListA, bListB;
+  local i,j, m_resRowInfoA, m_resRowInfoB, bResult,
+    countRowA, countRowB, bListA, bListB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
-    indexA, indexB, bRepeatCompareRows;
+    indexA, indexB, bRepeatCompareRows,
+    bMatrix;
 
   print(indexA, indexB);
   if evalb(rowA = m_matrix[indexB]) and evalb(rowB = m_matrix[indexA]) then
@@ -413,7 +414,11 @@ compareRowsOpMatrx := proc(rowA, rowB)
         bRepeatCompareRows := false;
         bResult := compareOrePoly(rowA[i], rowB[j], rowA, rowB);
         if bRepeatCompareRows = false then
-          bMatrix[i,j] := bResult;
+          if bResult = true then
+            bMatrix[i,j] := 1;
+          else
+            bMatrix[i,j] := -1;
+          end if;
           bListA[j] := bListA[j] and bResult;
           bListB[j] := bListB[j] or bResult;
         end if;
@@ -421,22 +426,56 @@ compareRowsOpMatrx := proc(rowA, rowB)
 
     end do;
 
-    for i to size do
-      if bListA[i] = false then
-        countRowA := countRowA + 1;
-      end if;
-      if bListB[i] = true then
-        countRowB := countRowB + 1;
-      end if;
-    end do;
+    #for i to size do
+    #  if bListA[i] = false then
+    #    countRowA := countRowA + 1;
+    #  end if;
+    #  if bListB[i] = true then
+    #    countRowB := countRowB + 1;
+    #  end if;
+    #end do;
+    #bResult := evalb(countRowA > countRowB);
 
-    bResult := evalb(countRowA > countRowB);
-
+    bResult := processDataCollection();
   end if;
 
   return bResult;
 end proc:
 
+# function processDataCollection
+processDataCollection := proc()
+  local i,j,list_NumberA, list_NumberB;
+  global size, bMatrix; # {-1,0,1}
+  countRowA := 0;
+  countRowB := 0;
+  list_NumberA := computeVectorOptimalCoeffFrom_bMatrix(); # {-1,0,1}
+  list_NumberB := computeVectorOptimalCoeffFrom_bMatrix(); # {-1,0,1}
+
+  if list_NumberA[1] < list_NumberB[1] then
+    return true;
+  elif list_NumberA[1] > list_NumberB[1] then
+    return false;
+  elif list_NumberA[3] > list_NumberB[3] then
+    return true;
+  elif list_NumberA[3] < list_NumberB[3] then
+    return false;
+  else
+    print("!!: processDataCollection");
+  end if;
+end proc:
+
+# function computeVectorOptimalCoeffFrom_bMatrix
+computeVectorOptimalCoeffFrom_bMatrix := proc()
+  local i,j,list_Numbers, countRow, countCol, bResult;
+  global size, bMatrix; # {-1,0,1}
+  
+  list_Numbers := convert(vector(size,0),list);
+
+  # !
+  
+
+  return list_Numbers;
+end proc:
 # function compareOrePoly
 compareOrePoly := proc (oreA, oreB, rowA, rowB) 
   local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB, 
