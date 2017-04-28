@@ -419,8 +419,8 @@ compareRowsOpMatrx := proc(rowA, rowB)
           else
             bMatrix[i,j] := -1;
           end if;
-          bListA[j] := bListA[j] and bResult;
-          bListB[j] := bListB[j] or bResult;
+          #bListA[j] := bListA[j] and bResult;
+          #bListB[j] := bListB[j] or bResult;
         end if;
       end do;
 
@@ -448,8 +448,9 @@ processDataCollection := proc()
   global size, bMatrix; # {-1,0,1}
   countRowA := 0;
   countRowB := 0;
-  list_NumberA := computeVectorOptimalCoeffFrom_bMatrix(); # {-1,0,1}
-  list_NumberB := computeVectorOptimalCoeffFrom_bMatrix(); # {-1,0,1}
+  list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
+  bMatrix := - bMatrix;
+  list_NumberB := computeOptimalVector(bMatrix); # {-1,0,1}
 
   if list_NumberA[1] < list_NumberB[1] then
     return true;
@@ -464,18 +465,97 @@ processDataCollection := proc()
   end if;
 end proc:
 
-# function computeVectorOptimalCoeffFrom_bMatrix
-computeVectorOptimalCoeffFrom_bMatrix := proc()
-  local i,j,list_Numbers, countRow, countCol, bResult;
-  global size, bMatrix; # {-1,0,1}
-  
-  list_Numbers := convert(vector(size,0),list);
-
-  # !
-  
-
-  return list_Numbers;
+# function computeVectors
+computeVectors := proc (m::Matrix) 
+  local i, j, listLists, minorLists, count, size; 
+  listLists := list(); 
+  size := LinearAlgebra:-RowDimension(m); 
+  if size = 1 then 
+    return [m[1, 1]];
+  end if; 
+  for i to size do 
+    count := m[i][1]; 
+    minorLists := computeVectors(LinearAlgebra:-Minor(m, i, 1, output = ['matrix'])); 
+    for j to size-1 do 
+      listLists := [op(listLists), [count, op(minorLists[j])]]; 
+    end do;
+  end do; 
+  return listLists;
 end proc:
+
+# function computeOptimalVector
+computeOptimalVector := proc (m::Matrix) 
+  local i, j, listNumberLists, listValues, listTemp, listEmpty, resultVector, count, size, listSort, temp; 
+  size := LinearAlgebra:-RowDimension(m); 
+  listNumberLists := computeVectors(m); 
+  print(listNumberLists); 
+  listEmpty := convert(vector(size, 0), list); 
+  listValues := list(); 
+  for i to nops(listNumberLists) do 
+    listTemp := listEmpty; 
+    for j to size do 
+      if listNumberLists[i][j] = -1 then 
+        listTemp[1] := listTemp[1]+1;
+      elif listNumberLists[i][j] = 0 then 
+        listTemp[2] := listTemp[2]+1;
+      elif listNumberLists[i][j] = 1 then 
+        listTemp[3] := listTemp[3]+1;
+      end if;
+    end do; 
+    listValues := [op(listValues), listTemp];
+  end do; print(listValues); 
+  listSort := list(); 
+  for i to nops(listValues) do 
+    temp := insertValuesInList(listValues[i], listSort); 
+    listSort := temp;
+  end do; 
+  print(listSort); 
+  resultVector := listSort[1]; 
+  for i to nops(listValues) do 
+    if resultVector = listValues[i] then 
+      count := i; 
+      break; 
+    end if;
+  end do; 
+  return listNumberLists[count];
+end proc:
+
+# function insertValuesInList
+insertValuesInList := proc (values, listSort) 
+  local i, j, newListSort; 
+  if nops(listSort) = 0 then 
+    return [values];
+  end if; 
+  for i to nops(listSort) do 
+    if listSort[i] <> values then 
+      if compareValues(values, listSort[i]) then 
+        if i = 1 then 
+          return [values, op(listSort)];
+        else 
+          return [op(listSort[1 .. i-1]), values, op(listSort[i+1, nops(listSort)])];
+        end if;
+      elif i = nops(listSort) then 
+        return [op(listSort), values];
+      end if;
+    else 
+      return listSort;
+    end if;
+  end do;
+end proc: 
+
+# function compareValues
+compareValues := proc (valueA, valueB) 
+  if valueA[1] < valueB[1] then 
+    return true;
+  elif valueB[1] < valueA[1] then 
+    return false; 
+  elif valueB[3] < valueA[3] then 
+    return true;
+  elif valueA[3] < valueB[3] then 
+    return false;
+  end if;
+end proc:
+
 # function compareOrePoly
 compareOrePoly := proc (oreA, oreB, rowA, rowB) 
   local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB, 
