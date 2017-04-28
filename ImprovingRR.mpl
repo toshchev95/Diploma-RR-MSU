@@ -1,4 +1,5 @@
 $include "C:\\Kursovay\\maple\\bTest.mpl"
+$include "C:\\Kursovay\\maple\\Generate.mpl"
 with(OreTools):
 with(LinearAlgebra):
 with(RandomTools):
@@ -14,22 +15,33 @@ printRankNullSpaceOpMatrix := proc(opMatrix::Matrix)
   print("NullSpace=", LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(m_front)));
 end proc:
 
+# function printList_opIterMatrix
+printList_opIterMatrix := proc(listMatrix)
+  local i;
+  print(nops(listMatrix));
+  for i to nops(listMatrix) do
+    print(i,listMatrix[i]);
+  end do;
+end proc:
+
 # function modifyRR
 modifyRR := proc(opMatrix::Matrix)
-  local A,B,i, saved,nullSpace_indexRowOrderDiff, firstListNumberHighDiffForUniMat;
-  local vector_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff, uni;
+  local A,B,step,i, saved,nullSpace_indexRowOrderDiff, firstListNumberHighDiffForUniMat;
+  local vector_indexRowOrderDiff, m_nullSpace, m_indexRowOrderDiff, uni, m_newRow;
   local height := op(1, opMatrix)[1], 
         width := op(1, opMatrix)[2];
   global front, m_matrix, fullNullSpace,m_deg_rows, m_infoOnMatrix, m_matrixInfo,
-    size := height;
+    listIterMatrix, size := height;
 
   if height <> width then
     error "Func modifyRR: wrong scale opMatrix <- height =/= width";
   end if;
 
   # init
-  front := getFrontMatrix(opMatrix);
-  m_matrix := opMatrix;
+  step:=1; listIterMatrix := [opMatrix];
+
+  m_matrix := matrixOreWithoutDenom(opMatrix);
+  front := getFrontMatrix(m_matrix);
 
   # Statistics:-Count
   #print(A, LinearAlgebra:-Rank(A),LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(A)));
@@ -37,7 +49,7 @@ modifyRR := proc(opMatrix::Matrix)
   while (LinearAlgebra:-Rank(front) < LinearAlgebra:-RowDimension(front)) do 
 
     # Data collection
-    fullNullSpace := LinearAlgebra[NullSpace](LinearAlgebra:-Transpose(front));
+    fullNullSpace := nullspaceWithoutDenom(front);
     m_matrixInfo := Matrix(size);
     m_deg_rows := vector(size, 0);
     for i to size do
@@ -56,17 +68,27 @@ modifyRR := proc(opMatrix::Matrix)
   
       # issues modify
       nullSpace_indexRowOrderDiff := estimations();
-      m_nullSpace := vector_indexRowOrderDiff[1];
-      m_indexRowOrderDiff := vector_indexRowOrderDiff[2];
+      m_nullSpace := nullSpace_indexRowOrderDiff[1];
+      m_indexRowOrderDiff := nullSpace_indexRowOrderDiff[2];
+      m_newRow := nullSpace_indexRowOrderDiff[3];
     end if;
 
     uni := getUnimodulMatrix(m_matrix, height, m_nullSpace, m_deg_rows, m_indexRowOrderDiff);
-    saved := getReverseLUMatrix(m_matrix, uni);
+    #saved := getReverseLUMatrix(m_matrix, uni);
+    #saved := matrixOreWithoutDenom(saved);
+
+    saved := m_matrix;
+    saved[m_indexRowOrderDiff] := m_newRow;
+
+    print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
+    listIterMatrix := [op(listIterMatrix), saved];
 
     # check again
     front := getFrontMatrix(saved);
     m_matrix := saved;
   end do;  
+
+  printList_opIterMatrix(listIterMatrix);
 
   return m_matrix;
 end proc:
@@ -78,12 +100,12 @@ end proc:
 # ! доработать
 # function getInfoOnOpMatrix
 getInfoOnOpMatrix := proc()
-  local i,j, listNumberRowsForUniMatrix, numbersRowsNullSpace, temp, maxOrd, highDiffMatrix,
+  local i,j,k, listNumberRowsForUniMatrix, numbersRowsNullSpace, temp, maxOrd, highDiffMatrix,
     listNumbersRowsColsInfo, listOfOrderDiff, listOfPoly, listEmpty, listOrderDiffRowUniMat;
   global m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, size, # global for modifyRR()
     m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix, nullSpace;
 
-  highDiffMatrix := max(m_deg_rows);
+  highDiffMatrix := max(convert(m_deg_rows, list));
   maxOrd := 0;
 
   # Список номеров строк для неоднозначности при получении унимод матриц
@@ -114,8 +136,8 @@ getInfoOnOpMatrix := proc()
 
       # compute
       listOfOrderDiff := list();
-      for i to nops(listOfPoly) do 
-        if listOfPoly[i] <> 0 then 
+      for k to nops(listOfPoly) do 
+        if listOfPoly[k] <> 0 then 
           temp := 1;
         else 
           temp := 0;
@@ -129,6 +151,7 @@ getInfoOnOpMatrix := proc()
     end do;
 
   end do;
+
 
   # А также вычислим общую информацию по строкам и столбцам opMatrix, индексы к. нам известны
   # Вычислим инфу по строкам и столбцам opMatrix
@@ -160,10 +183,24 @@ getInfoOnOpMatrix := proc()
 
 end proc:
 
+# function getSumOrePolyInRows
+getSumOrePolyInRows := proc (orePoly) 
+  local i, listPolynomials, maxHighDiffOrder, listEmpty; 
+  listPolynomials := convert(map(proc (ore) options operator, arrow; [seq(x, `in`(x, ore))] end proc, orePoly), list); 
+  maxHighDiffOrder := max(getHighDifferRow(orePoly)); 
+  listEmpty := convert(vector(maxHighDiffOrder+1, 0), list); 
+  for i to nops(listPolynomials) do 
+    listEmpty := sumListDifferentLength(listEmpty, listPolynomials[i]);
+  end do; 
+
+  return listEmpty;
+end proc:
+
 # function getListNumberHighDiffForUniMat
 getListNumberHighDiffForUniMat := proc(nullSpace, m_deg_rows)
   local j, numbersRowsNullSpace, maxOrd;
   
+  maxOrd := 0;
   numbersRowsNullSpace := list();
   for j to nops(nullSpace) do
     if nullSpace[j] <> 0 then
@@ -227,7 +264,7 @@ end proc:
 estimations := proc()
   local i,j, 
     m_nullSpace, m_indexRowOrderDiff, listNumberRowsForUniMatrix, newRow, listNumberRowsForNullSpace, numberRowForNullSpace,
-    nullSpace, listPar_s, tempPar_s, betterParameters;
+    nullSpace, listPar_s, tempPar_s, betterParameters, m_newRow;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front;
 
   listNumberRowsForUniMatrix := m_infoOnMatrix[4];
@@ -241,7 +278,7 @@ estimations := proc()
     nullSpace := fullNullSpace[i];
     for j to nops(listNumberRowsForNullSpace) do
       numberRowForNullSpace := listNumberRowsForNullSpace[j];
-      newRow := getReplaceRowMatrixRR(opMatrix, size, nullSpace, m_deg_rows, numberRowForNullSpace);
+      newRow := getReplaceRowMatrixRR(m_matrix, size, nullSpace, m_deg_rows, numberRowForNullSpace);
 
       # fill out -> tempPar_s[4]
       tempPar_s := [nullSpace, numberRowForNullSpace, newRow, getHighDifferRow(newRow)];
@@ -258,7 +295,8 @@ estimations := proc()
   # Result
   m_nullSpace := betterParameters[1];
   m_indexRowOrderDiff := betterParameters[2];
-  return [m_nullSpace, m_indexRowOrderDiff];
+  m_newRow := betterParameters[3];
+  return [m_nullSpace, m_indexRowOrderDiff, m_newRow];
 end proc:
 
 # function cmpParameters ( listParameters := [nullSpace, numberRowForNullSpace, newRow, getHighDifferRow(newRow)] )
@@ -283,7 +321,7 @@ cmpParameters := proc(listPar_A, listPar_B)
   # максимальный порядок дифф. в строках, кот. соответствуют не нулевые значения nullSpace
   # При выборе учесть, что в новой строке HighOrderDiff м.б. = 0.
   # (!) Note: достаточно вычислить новую строку
-  if listPar_A[3] <> listPar_A[3] then
+  if evalb(listPar_A[3] <> listPar_B[3]) then
 
     polyNullSpace_A := listPar_A[1][indexA];
     polyNullSpace_B := listPar_B[1][indexB];
@@ -336,13 +374,24 @@ end proc:
 
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
-  local i,j, m_resRowInfoA, m_resRowInfoB;
+  local i,j, m_resRowInfoA, m_resRowInfoB, bResult, 
+    countRowA, countRowB, bMatrix, bListA, bListB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
-    indexA, indexB;
+    indexA, indexB, bRepeatCompareRows;
 
-  # m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
-  m_resRowInfoA := getNonNullList(m_infoOnMatrix[1][indexB]);
-  m_resRowInfoB := getNonNullList(m_infoOnMatrix[1][indexA]);
+  print(indexA, indexB);
+  if evalb(rowA = m_matrix[indexB]) and evalb(rowB = m_matrix[indexA]) then
+    # m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
+    # m_RowsInfo := [sumListDifferentLength(listOfOrderDiff), sumListDifferentLength(listOfPoly)];
+    # listOfOrderDiff - бесполезен
+    print("if then");
+    m_resRowInfoA := OrePoly(op(getNonNullList(m_infoOnMatrix[1][2][indexB])));
+    m_resRowInfoB := OrePoly(op(getNonNullList(m_infoOnMatrix[1][2][indexA])));
+  else
+    print("else", rowA);
+    m_resRowInfoA := OrePoly(op(getNonNullList(getSumOrePolyInRows(rowA))));
+    m_resRowInfoB := OrePoly(op(getNonNullList(getSumOrePolyInRows(rowB))));
+  end if;
 
   # a) сумма всех порядков дифференцирования (<)
   # b) кол-во термов порядков диф-ния (>)
@@ -350,15 +399,53 @@ compareRowsOpMatrx := proc(rowA, rowB)
   # d) кол-во термов f(x) (<)
   # e) числа у множителей (<)
   
-  return compareOrePoly(m_resRowInfoA,m_resRowInfoB);
+  bRepeatCompareRows := false;  
+  bResult := compareOrePoly(m_resRowInfoA,m_resRowInfoB, rowA, rowB);
+  if bRepeatCompareRows = true then
+    print("!");
+    countRowA := 0; 
+    countRowB := 0;
+    bListA := [seq(true,k=1..size)];
+    bListB := [seq(false,k=1..size)];
+    bMatrix := Matrix(size);
+    for i to size do # rowA
+      for j to size do # rowB
+        bRepeatCompareRows := false;
+        bResult := compareOrePoly(rowA[i], rowB[j], rowA, rowB);
+        if bRepeatCompareRows = false then
+          bMatrix[i,j] := bResult;
+          bListA[j] := bListA[j] and bResult;
+          bListB[j] := bListB[j] or bResult;
+        end if;
+      end do;
+
+    end do;
+
+    for i to size do
+      if bListA[i] = false then
+        countRowA := countRowA + 1;
+      end if;
+      if bListB[i] = true then
+        countRowB := countRowB + 1;
+      end if;
+    end do;
+
+    bResult := evalb(countRowA > countRowB);
+
+  end if;
+
+  return bResult;
 end proc:
 
 # function compareOrePoly
-compareOrePoly := proc (oreA, oreB) 
+compareOrePoly := proc (oreA, oreB, rowA, rowB) 
   local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB, 
         numberDiffA, numberDiffB, sumPlusCoeffsA, sumPlusCoeffsB; 
+  global bRepeatCompareRows;
   listA := [seq(x, `in`(x, oreA))]; 
   listB := [seq(x, `in`(x, oreB))]; 
+
+  print(oreA,oreB);
   sizeA := nops(listA); 
   sizeB := nops(listB); 
   sumPolyA := sum('listA[k]', k = 1 .. sizeA); 
@@ -369,16 +456,16 @@ compareOrePoly := proc (oreA, oreB)
   numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA); 
   numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB); 
 
-  sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA)))[k]', k = 1 .. nops(sumPolyA)); 
-  sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB)))[k]', k = 1 .. nops(sumPolyB)); 
+  sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA,x)))[k]', k = 1 .. nops(sumPolyA)); 
+  sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops(sumPolyB)); 
 
   if nops(oreA) < nops(oreB) then 
     return true 
   elif nops(oreB) < nops(oreA) then 
     return false 
-  elif numberDiffA < nuberDiffB then 
+  elif numberDiffA < numberDiffB then 
     return true 
-  elif nuberDiffB < numberDiffA then 
+  elif numberDiffB < numberDiffA then 
     return false 
   elif degree(sumPolyA) < degree(sumPolyB) then 
     return true 
@@ -389,13 +476,16 @@ compareOrePoly := proc (oreA, oreB)
   elif nops(sumPolyB) < nops(sumPolyA) then 
     return false 
   elif sumPlusCoeffsA < sumPlusCoeffsB then 
-    return true 
+    bRepeatCompareRows := true;
+    return true;
   elif sumPlusCoeffsB < sumPlusCoeffsA then 
-    return false 
+    bRepeatCompareRows := true;
+    return false; 
   else 
     # using sumListDifferentLength(), coeffFull()
     print("In func compareOrePoly: else"); 
-    return true 
+    bRepeatCompareRows := true;
+    return true;
   end if 
 end proc:
 
@@ -458,7 +548,7 @@ getReplaceMatrixRR := proc (opMatrix, height, nullSpace, m_deg_rows, m_indexRowO
 
   m_matrix := opMatrix; 
   m_matrix[m_indexRowOrderDiff] := getReplaceRowMatrixRR(opMatrix, height, 
-                      nullSpace, m_deg_rows, m_indexRowOrderDiff) ;
+                      nullSpace, m_deg_rows, m_indexRowOrderDiff);
   return m_matrix;
 end proc:
 
@@ -481,7 +571,7 @@ getReplaceRowMatrixRR := proc(opMatrix, height, nullSpace, m_deg_rows, m_indexRo
     end if; 
   end do; 
   
-  return convert(rowResultSum, Vector); 
+  return eqLCMinMatrix(convert(rowResultSum,list)); 
 end proc:
 
 # function getUnitMatrix
