@@ -41,6 +41,7 @@ modifyRR := proc(opMatrix::Matrix)
   step:=1; listIterMatrix := [opMatrix];
 
   m_matrix := matrixOreWithoutDenom(opMatrix);
+  print(m_matrix);
   front := getFrontMatrix(m_matrix);
 
   # Statistics:-Count
@@ -60,6 +61,7 @@ modifyRR := proc(opMatrix::Matrix)
     if nops(fullNullSpace) = 1 and nops(firstListNumberHighDiffForUniMat) = 1 then
       m_nullSpace := fullNullSpace[1];
       m_indexRowOrderDiff := firstListNumberHighDiffForUniMat[1];
+      m_newRow := getReplaceRowMatrixRR(m_matrix, size, m_nullSpace, m_deg_rows, m_indexRowOrderDiff);
     else
       # Info:Data collection
   
@@ -78,9 +80,10 @@ modifyRR := proc(opMatrix::Matrix)
     #saved := matrixOreWithoutDenom(saved);
 
     saved := m_matrix;
-    saved[m_indexRowOrderDiff] := m_newRow;
+    saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
 
     print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
+    print(saved);
     listIterMatrix := [op(listIterMatrix), saved];
 
     # check again
@@ -404,10 +407,11 @@ compareRowsOpMatrx := proc(rowA, rowB)
   bResult := compareOrePoly(m_resRowInfoA,m_resRowInfoB, rowA, rowB);
   if bRepeatCompareRows = true then
     print("!");
-    countRowA := 0; 
-    countRowB := 0;
-    bListA := [seq(true,k=1..size)];
-    bListB := [seq(false,k=1..size)];
+    #countRowA := 0; 
+    #countRowB := 0;
+    #bListA := [seq(true,k=1..size)];
+    #bListB := [seq(false,k=1..size)];
+
     bMatrix := Matrix(size);
     for i to size do # rowA
       for j to size do # rowB
@@ -446,8 +450,6 @@ end proc:
 processDataCollection := proc()
   local i,j,list_NumberA, list_NumberB;
   global size, bMatrix; # {-1,0,1}
-  countRowA := 0;
-  countRowB := 0;
   list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
   bMatrix := - bMatrix;
   list_NumberB := computeOptimalVector(bMatrix); # {-1,0,1}
@@ -488,7 +490,7 @@ computeOptimalVector := proc (m::Matrix)
   local i, j, listNumberLists, listValues, listTemp, listEmpty, resultVector, count, size, listSort, temp; 
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
-  print(listNumberLists); 
+  #print(listNumberLists); 
   listEmpty := convert(vector(size, 0), list); 
   listValues := list(); 
   for i to nops(listNumberLists) do 
@@ -503,13 +505,14 @@ computeOptimalVector := proc (m::Matrix)
       end if;
     end do; 
     listValues := [op(listValues), listTemp];
-  end do; print(listValues); 
+  end do; 
+  #print(listValues); 
   listSort := list(); 
   for i to nops(listValues) do 
     temp := insertValuesInList(listValues[i], listSort); 
     listSort := temp;
   end do; 
-  print(listSort); 
+  #print(listSort); 
   resultVector := listSort[1]; 
   for i to nops(listValues) do 
     if resultVector = listValues[i] then 
