@@ -19,7 +19,7 @@ end proc:
 printList_opIterMatrix := proc(listMatrix)
   local i;
   print(nops(listMatrix));
-  for i to nops(listMatrix) do
+  for i to nops(listMatrix)-1 do
     print(i,listMatrix[i]);
   end do;
 end proc:
@@ -440,6 +440,7 @@ compareRowsOpMatrx := proc(rowA, rowB)
     #end do;
     #bResult := evalb(countRowA > countRowB);
 
+    print(rowA,rowB);
     bResult := processDataCollection();
   end if;
 
@@ -450,9 +451,13 @@ end proc:
 processDataCollection := proc()
   local i,j,list_NumberA, list_NumberB;
   global size, bMatrix; # {-1,0,1}
+  print(bMatrix);
   list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
+  print(list_NumberA);
   bMatrix := - bMatrix;
+  print(bMatrix);
   list_NumberB := computeOptimalVector(bMatrix); # {-1,0,1}
+  print(list_NumberB);
 
   if list_NumberA[1] < list_NumberB[1] then
     return true;
@@ -490,7 +495,7 @@ computeOptimalVector := proc (m::Matrix)
   local i, j, listNumberLists, listValues, listTemp, listEmpty, resultVector, count, size, listSort, temp; 
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
-  #print(listNumberLists); 
+  print(listNumberLists); 
   listEmpty := convert(vector(size, 0), list); 
   listValues := list(); 
   for i to nops(listNumberLists) do 
@@ -506,21 +511,22 @@ computeOptimalVector := proc (m::Matrix)
     end do; 
     listValues := [op(listValues), listTemp];
   end do; 
-  #print(listValues); 
+  print(listValues); 
   listSort := list(); 
   for i to nops(listValues) do 
     temp := insertValuesInList(listValues[i], listSort); 
     listSort := temp;
   end do; 
-  #print(listSort); 
+  print(listSort); 
   resultVector := listSort[1]; 
-  for i to nops(listValues) do 
-    if resultVector = listValues[i] then 
-      count := i; 
-      break; 
-    end if;
-  end do; 
-  return listNumberLists[count];
+  return resultVector;
+  #for i to nops(listValues) do 
+  #  if resultVector = listValues[i] then 
+  #    count := i; 
+  #    break; 
+  #  end if;
+  #end do; 
+  #return listNumberLists[count];
 end proc:
 
 # function insertValuesInList
@@ -582,21 +588,23 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops(sumPolyB)); 
 
   if nops(oreA) < nops(oreB) then 
-    return true 
+    return true;
   elif nops(oreB) < nops(oreA) then 
-    return false 
+    return false; 
   elif numberDiffA < numberDiffB then 
-    return true 
+    return true; 
   elif numberDiffB < numberDiffA then 
-    return false 
+    return false; 
   elif degree(sumPolyA) < degree(sumPolyB) then 
-    return true 
+    return true;
   elif degree(sumPolyB) < degree(sumPolyA) then 
-    return false 
+    return fals; 
   elif nops(sumPolyA) < nops(sumPolyB) then 
-    return true 
+    bRepeatCompareRows := true;
+    return true; 
   elif nops(sumPolyB) < nops(sumPolyA) then 
-    return false 
+    bRepeatCompareRows := true;
+    return false;
   elif sumPlusCoeffsA < sumPlusCoeffsB then 
     bRepeatCompareRows := true;
     return true;
