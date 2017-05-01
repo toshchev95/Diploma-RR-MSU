@@ -54,8 +54,9 @@ modifyRR := proc(opMatrix::Matrix)
     m_matrixInfo := Matrix(size);
     m_deg_rows := vector(size, 0);
     for i to size do
-      m_deg_rows[i] := getHighDifferRow(m_matrix[i]);
+      m_deg_rows[i] := getHighDifferRow2(m_matrix[i]);
     end do;
+    print("m_deg_rows",m_deg_rows);
 
     firstListNumberHighDiffForUniMat := getListNumberHighDiffForUniMat(fullNullSpace[1], m_deg_rows);
     if nops(fullNullSpace) = 1 and nops(firstListNumberHighDiffForUniMat) = 1 then
@@ -83,6 +84,8 @@ modifyRR := proc(opMatrix::Matrix)
     saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
 
     print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
+    step:=step+1;
+    if step = 3 then break; end if;
     print(saved);
     listIterMatrix := [op(listIterMatrix), saved];
 
@@ -91,7 +94,8 @@ modifyRR := proc(opMatrix::Matrix)
     m_matrix := saved;
   end do;  
 
-  printList_opIterMatrix(listIterMatrix);
+  # происходит присваивание матриц и переприсваивание их строк, поэтому все матирцы = результирующей 
+  #printList_opIterMatrix(listIterMatrix);
 
   return m_matrix;
 end proc:
@@ -109,6 +113,7 @@ getInfoOnOpMatrix := proc()
     m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix, nullSpace;
 
   highDiffMatrix := max(convert(m_deg_rows, list));
+  print(m_deg_rows,"highDiffMatrix",highDiffMatrix);
   maxOrd := 0;
 
   # Список номеров строк для неоднозначности при получении унимод матриц
@@ -205,7 +210,7 @@ getListNumberHighDiffForUniMat := proc(nullSpace, m_deg_rows)
   
   maxOrd := 0;
   numbersRowsNullSpace := list();
-  for j to nops(nullSpace) do
+  for j to Statistics:-Count(nullSpace) do
     if nullSpace[j] <> 0 then
       if m_deg_rows[j] > maxOrd then
         maxOrd := m_deg_rows[j];
@@ -250,7 +255,7 @@ end proc:
 getInfoMatrixCol := proc(Col)
   local i, listInfo;
   listInfo := Col[1];
-
+  #print("Col",Col);
   for i from 2 to nops(Col) do
     listInfo := listInfo + Col[i];
   end do;
@@ -719,4 +724,18 @@ getUnitMatrix := proc (size)
   end do; 
   
   return matrix;
+end proc:
+
+# function getHighDifferRow2(list)
+getHighDifferRow2 := proc(list)
+  local i, ord;
+  ord := 0;
+
+  for i to Statistics:-Count(list) do
+    if nops(list[i])>ord then
+      ord := nops(list[i]);
+    end if; 
+  end do; 
+
+  return ord - 1;
 end proc:
