@@ -572,7 +572,9 @@ end proc:
 
 # function compareOrePoly
 compareOrePoly := proc (oreA, oreB, rowA, rowB) 
-  local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB, 
+  local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB,
+        sumDiffA,sumDiffB, sumOrder10_A, sumOrder10_B, sumNumbersAdditions_A, sumNumbersAdditions_B,
+        sumPolyWithout0_A, sumPolyWithout0_B, sumOrdersPolynomialsA, sumOrdersPolynomialsB,
         numberDiffA, numberDiffB, sumPlusCoeffsA, sumPlusCoeffsB; 
   global bRepeatCompareRows;
   listA := [seq(x, `in`(x, oreA))]; 
@@ -581,29 +583,65 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   print(oreA,oreB);
   sizeA := nops(listA); 
   sizeB := nops(listB); 
-  sumPolyA := sum('listA[k]', k = 1 .. sizeA); 
-  sumPolyB := sum('listB[k]', k = 1 .. sizeB); 
 
+  # get Info of DiffOrders
+  sumDiffA := getSumDiffOrders(listA);
+  sumDiffB := getSumDiffOrders(listB);
   listIsDiffA := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listA); 
   listIsDiffB := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listB); 
   numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA); 
   numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB); 
 
+  # get Info of coeffs polynomials
+  sumNumbersAdditions_A := getSumNumbersAdditions(listA);
+  sumNumbersAdditions_B := getSumNumbersAdditions(listB);
+  sumOrdersPolynomialsA := getSumOrdersPolynomials(listA);
+  sumOrdersPolynomialsB := getSumOrdersPolynomials(listB);
+  sumPolyWithout0_A := sum('listA[k]', k = 2 .. sizeA); 
+  sumPolyWithout0_B := sum('listB[k]', k = 2 .. sizeB);   
+  sumOrder10_A := getSumOrder10(listA);
+  sumOrder10_B := getSumOrder10(listB);
+
+  # get Info of sumElements
+  sumPolyA := sum('listA[k]', k = 1 .. sizeA); 
+  sumPolyB := sum('listB[k]', k = 1 .. sizeB); 
+
   sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA,x)))[k]', k = 1 .. nops(sumPolyA)); 
   sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops(sumPolyB)); 
 
+  # process DiffOrders
   if nops(oreA) < nops(oreB) then 
     return true;
   elif nops(oreB) < nops(oreA) then 
     return false; 
+  elif sumDiffA < sumDiffB then
+    return true;
+  elif sumDiffA > sumDiffB then
+    return false;
   elif numberDiffA < numberDiffB then 
     return true; 
   elif numberDiffB < numberDiffA then 
     return false; 
-  elif degree(sumPolyA) < degree(sumPolyB) then 
+
+  # process listPolynomials
+  elif sumNumbersAdditions_A < sumNumbersAdditions_B then
     return true;
-  elif degree(sumPolyB) < degree(sumPolyA) then 
-    return fals; 
+  elif sumNumbersAdditions_A > sumNumbersAdditions_B then
+    return false;
+  elif sumOrdersPolynomialsA < sumOrdersPolynomialsB then
+    return true;
+  elif sumOrdersPolynomialsA > sumOrdersPolynomialsB then
+    return false;
+  elif degree(sumPolyWithout0_A) < degree(sumPolyWithout0_B) then 
+    return true;
+  elif degree(sumPolyWithout0_B) < degree(sumPolyWithout0_A) then 
+    return false; 
+  elif sumOrder10_A < sumOrder10_B then
+    return true;
+  elif sumOrder10_A > sumOrder10_B then
+    return false;
+
+  # process sum_Poly  
   elif nops(sumPolyA) < nops(sumPolyB) then 
     bRepeatCompareRows := true;
     return true; 
@@ -621,9 +659,44 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
     print("In func compareOrePoly: else"); 
     bRepeatCompareRows := true;
     return true;
-  end if 
+  end if;
 end proc:
 
+# function getSumOrder10
+getSumOrder10 := proc(listPoly)
+  local listSumOrder10;
+  listSlag := map(proc (slag) options operator, arrow; coeffs(slag, x) end proc, listPoly);
+  listSumOrder10 := map(proc (number) options operator, arrow; nops(convert(number, 'base', 10))-1 end proc, listSlag);
+  return sum('listSumOrder10[k]', k= 1.. nops(listPoly));
+end proc:
+
+# function getSumOrdersPolynomials
+getSumOrdersPolynomials := proc(listPoly) 
+  local listOrdersPolynomials;
+  listOrdersPolynomials := map(proc (x) options operator, arrow; if x <> 0 then return degree(x) else return 0 end if end proc, listPoly);
+  return sum('listOrdersPolynomials[k]', k= 1.. nops(listPoly));
+end proc:
+
+# function getSumNumbersAdditions
+getSumNumbersAdditions := proc(listPoly)
+  local listNumbersAdditions;
+  listNumbersAdditions := map(proc (x) options operator, arrow; if x <> 0 then return nops(x) else return 0 end if end proc, listPoly);
+  return sum('listNumbersAdditions[k]', k= 1.. nops(listPoly));
+end proc:
+
+# function getSumDiffOrders
+getSumDiffOrders := proc(listPoly)
+  local sumDiffOrders,i, order;
+  sumDiffOrders := 0;
+  order := 0;
+  for i to nops(listPoly) do
+    if listPoly[i] <> 0 then
+      sumDiffOrders := sumDiffOrders + order;
+    end if;
+    order := order + 1;
+  end do;
+  return sumDiffOrders;
+end proc:
 
 # function coeffFull
 coeffFull := proc (poly) 
@@ -637,7 +710,7 @@ coeffFull := proc (poly)
 end proc:
 
 
-
+# function getNonNullList
 getNonNullList := proc (listA) 
   local i, tempList, countZero; 
   countZero := 0; 
