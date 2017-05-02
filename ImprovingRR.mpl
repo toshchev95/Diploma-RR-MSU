@@ -383,7 +383,8 @@ end proc:
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
   local i,j, m_resRowInfoA, m_resRowInfoB, bResult,
-    countRowA, countRowB, bListA, bListB;
+    countRowA, countRowB, sumOrdersPolynomialsRowA, sumOrdersPolynomialsRowB,
+    highDiffA,highDiffB, sumDiffOrdersA, sumDiffOrdersB, listRowA, listRowB, numberDiffRowA,numberDiffRowB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
     indexA, indexB, bRepeatCompareRows,
     bMatrix;
@@ -402,6 +403,46 @@ compareRowsOpMatrx := proc(rowA, rowB)
     m_resRowInfoB := OrePoly(op(getNonNullList(getSumOrePolyInRows(rowB))));
   end if;
 
+  # Сравним строки по критериям сравнения 2х элементов 1 - 5
+  # 1
+  highDiffA := getHighDifferRow2(rowA);
+  highDiffB := getHighDifferRow2(rowB);
+  # 2
+  sumDiffOrdersA := sum('map(proc (ore) options operator, arrow; nops(ore)-1 end proc, rowA)[k]', k = 1 .. size);
+  sumDiffOrdersB := sum('map(proc (ore) options operator, arrow; nops(ore)-1 end proc, rowB)[k]', k = 1 .. size);
+  # 3
+  listRowA := convert(map(proc (ore) options operator, arrow; [seq(x, `in`(x, ore))] end proc, rowA), list);
+  listRowB := convert(map(proc (ore) options operator, arrow; [seq(x, `in`(x, ore))] end proc, rowB), list);
+  numberDiffRowA := getNumberDiffRow(listRowA);
+  numberDiffRowB := getNumberDiffRow(listRowB);
+  # 4
+  sumNumbersAdditionsRowA := getSumNumbersAdditionsRow(listRowA);
+  sumNumbersAdditionsRowB := getSumNumbersAdditionsRow(listRowB);
+  # 5
+  sumOrdersPolynomialsRowA := getSumOrdersPolynomialsRow(listRowA);
+  sumOrdersPolynomialsRowB := getSumOrdersPolynomialsRow(listRowB);
+  if highDiffA < highDiffB then
+    return true;
+  elif highDiffA > highDiffB then
+    return false;
+  elif sumDiffOrdersA < sumDiffOrdersB then
+    return true;
+  elif sumDiffOrdersA > sumDiffOrdersB then
+    return false;
+  elif numberDiffRowA < numberDiffRowB then  
+    return true;
+  elif numberDiffRowA > numberDiffRowB then
+    return false;
+  elif sumNumbersAdditionsRowA < sumNumbersAdditionsRowB then
+    return true;
+  elif sumNumbersAdditionsRowA > sumNumbersAdditionsRowB then
+    return false;
+  elif sumOrdersPolynomialsRowA < sumOrdersPolynomialsRowB then
+    return true;
+  elif sumOrdersPolynomialsRowA > sumOrdersPolynomialsRowB then
+    return false;
+  end if;  
+
   # a) сумма всех порядков дифференцирования (<)
   # b) кол-во термов порядков диф-ния (>)
   # c) степени у множителей коэффициентов полиномов Оре (<)
@@ -412,10 +453,6 @@ compareRowsOpMatrx := proc(rowA, rowB)
   bResult := compareOrePoly(m_resRowInfoA,m_resRowInfoB, rowA, rowB);
   if bRepeatCompareRows = true then
     print("!");
-    #countRowA := 0; 
-    #countRowB := 0;
-    #bListA := [seq(true,k=1..size)];
-    #bListB := [seq(false,k=1..size)];
 
     bMatrix := Matrix(size);
     for i to size do # rowA
@@ -428,22 +465,10 @@ compareRowsOpMatrx := proc(rowA, rowB)
           else
             bMatrix[i,j] := -1;
           end if;
-          #bListA[j] := bListA[j] and bResult;
-          #bListB[j] := bListB[j] or bResult;
         end if;
       end do;
 
     end do;
-
-    #for i to size do
-    #  if bListA[i] = false then
-    #    countRowA := countRowA + 1;
-    #  end if;
-    #  if bListB[i] = true then
-    #    countRowB := countRowB + 1;
-    #  end if;
-    #end do;
-    #bResult := evalb(countRowA > countRowB);
 
     print(rowA,rowB);
     bResult := processDataCollection();
@@ -588,8 +613,8 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   # get Info of DiffOrders
   sumDiffA := getSumDiffOrders(listA);
   sumDiffB := getSumDiffOrders(listB);
-  listIsDiffA := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listA); 
-  listIsDiffB := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listB); 
+  listIsDiffA := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listA[2 .. sizeA]);
+  listIsDiffB := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listB[2 .. sizeB]);
   numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA); 
   numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB); 
 
@@ -654,7 +679,7 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
     return true;
   elif sumPolySumOrder10_A > sumPolySumOrder10_B then
     return false;
-    
+
   elif sumPlusCoeffsA < sumPlusCoeffsB then 
     bRepeatCompareRows := true;
     return true;
@@ -684,6 +709,17 @@ getSumOrdersPolynomials := proc(listPoly)
   return sum('listOrdersPolynomials[k]', k= 1.. nops(listPoly));
 end proc:
 
+# function getSumOrdersPolynomialsRow
+getSumOrdersPolynomialsRow := proc(listPolyRow)
+  local i, sumOrdersPolynomialsRow;
+  global size;
+  sumOrdersPolynomialsRow := 0;
+  for i to size do
+    sumOrdersPolynomialsRow := umOrdersPolynomialsRow + getSumOrdersPolynomials(listPolyRow[i]);
+  end do;
+  return sumOrdersPolynomialsRow;
+end proc:
+
 # function getSumNumbersAdditions
 getSumNumbersAdditions := proc(listPoly)
   local listNumbersAdditions;
@@ -691,12 +727,23 @@ getSumNumbersAdditions := proc(listPoly)
   return sum('listNumbersAdditions[k]', k= 1.. nops(listPoly));
 end proc:
 
+# function getSumNumbersAdditionsRow
+getSumNumbersAdditionsRow := proc(listPolyRow)
+  local i, sumNumbersAdditionsRow;
+  global size;
+  sumNumbersAdditionsRow:=0;
+  for i to size do
+    sumNumbersAdditionsRow := sumNumbersAdditionsRow + getSumNumbersAdditions(listPolyRow[i]);
+  end do;
+  return sumNumbersAdditionsRow;
+end proc:
+
 # function getSumDiffOrders
 getSumDiffOrders := proc(listPoly)
   local sumDiffOrders,i, order;
   sumDiffOrders := 0;
   order := 0;
-  for i to nops(listPoly) do
+  for i from 2 to nops(listPoly) do
     if listPoly[i] <> 0 then
       sumDiffOrders := sumDiffOrders + order;
     end if;
@@ -704,6 +751,22 @@ getSumDiffOrders := proc(listPoly)
   end do;
   return sumDiffOrders;
 end proc:
+
+# function getNumberDiffRow
+getNumberDiffRow := proc (listRowOre) 
+  local i, numberDiffRow, numberDiff; 
+  global size; 
+  numberDiffRow := 0; 
+  for i to size do 
+    numberDiff := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listRowOre[i][2 .. nops(listRowOre[i])]); 
+    numberDiffRow := numberDiffRow + sum('numberDiff[k]', k = 1 .. nops(numberDiff)); 
+  end do; 
+
+  return numberDiffRow;
+end proc:
+
+
+
 
 # function coeffFull
 coeffFull := proc (poly) 
@@ -715,7 +778,6 @@ coeffFull := proc (poly)
 
   return listCoeff;
 end proc:
-
 
 # function getNonNullList
 getNonNullList := proc (listA) 
