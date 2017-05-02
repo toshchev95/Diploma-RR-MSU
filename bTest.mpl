@@ -396,14 +396,10 @@ end proc:
 # function saveAs(path) 
 SaveAs:=proc(filename)
   local i,j, fd;
-  try
     fd := fopen(filename,WRITE,TEXT);
     writedata(fd,UID_opMatrix);
     #writedata(!);
     #ExportMatrix(!)
-  catch:
-    error "func SaveAs: wrong saved";
-  end try;
 
   fclose(fd);
 end proc:

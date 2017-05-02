@@ -75,7 +75,6 @@ modifyRR := proc(opMatrix::Matrix)
       m_indexRowOrderDiff := nullSpace_indexRowOrderDiff[2];
       m_newRow := nullSpace_indexRowOrderDiff[3];
     end if;
-
     uni := getUnimodulMatrix(m_matrix, height, m_nullSpace, m_deg_rows, m_indexRowOrderDiff);
     #saved := getReverseLUMatrix(m_matrix, uni);
     #saved := matrixOreWithoutDenom(saved);
@@ -87,13 +86,13 @@ modifyRR := proc(opMatrix::Matrix)
 
     print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
     step:=step+1;
-    if step = 3 then break; end if;
     print(saved);
     listIterMatrix := [op(listIterMatrix), saved];
 
     # check again
     front := getFrontMatrix(saved);
     m_matrix := saved;
+    #print("Compare:",LinearAlgebra:-Rank(front), size);
   end do;  
 
   # происходит присваивание матриц и переприсваивание их строк, поэтому все матирцы = результирующей 
