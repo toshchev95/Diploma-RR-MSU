@@ -40,7 +40,7 @@ modifyRR := proc(opMatrix::Matrix)
   # init
   step:=1; listIterMatrix := [opMatrix];
 
-  m_matrix := matrixOreWithoutDenom(opMatrix);
+  m_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrix));
   print(m_matrix);
   front := getFrontMatrix(m_matrix);
 
@@ -81,7 +81,9 @@ modifyRR := proc(opMatrix::Matrix)
     #saved := matrixOreWithoutDenom(saved);
 
     saved := m_matrix;
+    #print("LCM:",m_newRow, eqLCMinMatrix(convert(m_newRow,list)));
     saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
+    saved := matrixOreWithoutGCD(saved);
 
     print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
     step:=step+1;
@@ -383,7 +385,7 @@ end proc:
 # function compareRowsOpMatrx (rowA, rowB)
 compareRowsOpMatrx := proc(rowA, rowB)
   local i,j, m_resRowInfoA, m_resRowInfoB, bResult,
-    countRowA, countRowB, sumOrdersPolynomialsRowA, sumOrdersPolynomialsRowB,
+    countRowA, countRowB, sumOrdersPolynomialsRowA, sumOrdersPolynomialsRowB,sumNumbersAdditionsRowA,sumNumbersAdditionsRowB,
     highDiffA,highDiffB, sumDiffOrdersA, sumDiffOrdersB, listRowA, listRowB, numberDiffRowA,numberDiffRowB;
   global size,m_matrix, m_infoOnMatrix, m_deg_rows,fullNullSpace, m_matrixInfo, front,
     indexA, indexB, bRepeatCompareRows,
@@ -441,6 +443,8 @@ compareRowsOpMatrx := proc(rowA, rowB)
     return true;
   elif sumOrdersPolynomialsRowA > sumOrdersPolynomialsRowB then
     return false;
+  else
+    print("In func compareRowsOpMatrx: execute special comparing algorithm");
   end if;  
 
   # a) сумма всех порядков дифференцирования (<)
@@ -696,7 +700,7 @@ end proc:
 
 # function getSumOrder10
 getSumOrder10 := proc(listPoly)
-  local listSumOrder10;
+  local listSlag, listSumOrder10;
   listSlag := map(proc (slag) options operator, arrow; coeffs(slag, x) end proc, listPoly);
   listSumOrder10 := map(proc (number) options operator, arrow; nops(convert(number, 'base', 10))-1 end proc, listSlag);
   return sum('listSumOrder10[k]', k= 1.. nops(listPoly));
@@ -880,4 +884,12 @@ getHighDifferRow2 := proc(list)
   end do; 
 
   return ord - 1;
+end proc:
+
+# function getFullNullSpace
+getFullNullSpace := proc(opMatrix)
+  local front, fullNullSpace;
+  front := getFrontMatrix(opMatrix);
+  fullNullSpace := nullspaceWithoutDenom(front);
+  return fullNullSpace;
 end proc:

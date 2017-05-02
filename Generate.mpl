@@ -136,6 +136,7 @@ eqLCMinMatrix := proc(oreListList)
   for i to nops(m_listLCM) do 
     m_eqLCM := lcm(m_listLCM[i]*m_eqLCM); 
   end do; 
+  # нет учёта GCD - целого числа
   #print(m_eqLCM);
   #print("before",oreListList);
   rowMatrix := map(proc (ore) options operator, arrow; OrePoly(seq( simplify(expand(x)*m_eqLCM) , `in`(x, ore))) end proc, oreListList); 
