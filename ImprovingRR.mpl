@@ -574,6 +574,7 @@ end proc:
 compareOrePoly := proc (oreA, oreB, rowA, rowB) 
   local i, j, listA, listB, sizeA, sizeB, sumPolyA, sumPolyB, listIsDiffA, listIsDiffB,
         sumDiffA,sumDiffB, sumOrder10_A, sumOrder10_B, sumNumbersAdditions_A, sumNumbersAdditions_B,
+        sumPolySumOrder10_A, sumPolySumOrder10_B,
         sumPolyWithout0_A, sumPolyWithout0_B, sumOrdersPolynomialsA, sumOrdersPolynomialsB,
         numberDiffA, numberDiffB, sumPlusCoeffsA, sumPlusCoeffsB; 
   global bRepeatCompareRows;
@@ -605,7 +606,8 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   # get Info of sumElements
   sumPolyA := sum('listA[k]', k = 1 .. sizeA); 
   sumPolyB := sum('listB[k]', k = 1 .. sizeB); 
-
+  sumPolySumOrder10_A := getSumOrder10([sumPolyA]);
+  sumPolySumOrder10_B := getSumOrder10([sumPolyB]);
   sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA,x)))[k]', k = 1 .. nops(sumPolyA)); 
   sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops(sumPolyB)); 
 
@@ -648,6 +650,11 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   elif nops(sumPolyB) < nops(sumPolyA) then 
     bRepeatCompareRows := true;
     return false;
+  elif sumPolySumOrder10_A < sumPolySumOrder10_B then
+    return true;
+  elif sumPolySumOrder10_A > sumPolySumOrder10_B then
+    return false;
+    
   elif sumPlusCoeffsA < sumPlusCoeffsB then 
     bRepeatCompareRows := true;
     return true;
