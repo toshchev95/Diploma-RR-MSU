@@ -79,6 +79,7 @@ modifyRR := proc(opMatrix::Matrix)
     #saved := getReverseLUMatrix(m_matrix, uni);
     #saved := matrixOreWithoutDenom(saved);
 
+print(99999999999999999999);
     saved := m_matrix;
     #print("LCM:",m_newRow, eqLCMinMatrix(convert(m_newRow,list)));
     saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
@@ -370,6 +371,7 @@ cmpParameters := proc(listPar_A, listPar_B)
   end if;
 
   if bCompareRows = true then
+    print(m_matrix[indexB], m_matrix[indexA]);
     if compareRowsOpMatrx(m_matrix[indexB], m_matrix[indexA]) = true then
       listPar_temp := listPar_A;
     else
@@ -618,8 +620,8 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   sumDiffB := getSumDiffOrders(listB);
   listIsDiffA := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listA[2 .. sizeA]);
   listIsDiffB := map(proc (x) options operator, arrow; if x = 0 then return 0 else return 1 end if end proc, listB[2 .. sizeB]);
-  numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA); 
-  numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB); 
+  numberDiffA := sum('listIsDiffA[k]', k = 1 .. sizeA - 1); 
+  numberDiffB := sum('listIsDiffB[k]', k = 1 .. sizeB - 1); 
 
   # get Info of coeffs polynomials
   sumNumbersAdditions_A := getSumNumbersAdditions(listA);
