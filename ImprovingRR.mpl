@@ -371,7 +371,7 @@ cmpParameters := proc(listPar_A, listPar_B)
   end if;
 
   if bCompareRows = true then
-    print(m_matrix[indexB], m_matrix[indexA]);
+    #print(m_matrix[indexB], m_matrix[indexA]);
     if compareRowsOpMatrx(m_matrix[indexB], m_matrix[indexA]) = true then
       listPar_temp := listPar_A;
     else
