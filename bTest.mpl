@@ -1,3 +1,4 @@
+#$include "C:\\Kursovay\\maple\\ImprovingRR.mpl"
 with(OreTools):
 with(LinearAlgebra):
 R := SetOreRing(x, 'differential'):
@@ -301,7 +302,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     return op(listGlobal);
     
   else
-    #UID_Results := [op(UID_Results), opMatrix];
+    UID_Results := [op(UID_Results), opMatrix];
     return listGain;
   end if;  
 end proc:
@@ -329,7 +330,9 @@ outputRR := proc(opMatrix::Matrix)
 
   print(List_UIDs);
 
+  print("End Results");
   printUID(UID_Results);
+  #print(UID_Results);
 
   graphVisualisation(createListEdgesFromNumberOpMatrix());
 
@@ -383,7 +386,7 @@ end proc:
 printUID := proc(UID)
   local i;
   for i to nops(UID) do
-    print(UID);
+    print(UID[i]);
   end do;
 end proc:
 

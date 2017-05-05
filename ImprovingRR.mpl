@@ -484,15 +484,21 @@ end proc:
 
 # function processDataCollection
 processDataCollection := proc()
-  local i,j,list_NumberA, list_NumberB;
+  local i,j,list_NumberA, list_NumberB, list_Numbers;
   global size, bMatrix; # {-1,0,1}
   print(bMatrix);
-  list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
-  print(list_NumberA);
-  bMatrix := - bMatrix;
-  print(bMatrix);
-  list_NumberB := computeOptimalVector(bMatrix); # {-1,0,1}
-  print(list_NumberB);
+
+  #list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
+  #print(list_NumberA);
+  #bMatrix := - bMatrix;
+  #print(bMatrix);
+  #list_NumberB := computeOptimalVector(bMatrix); # {-1,0,1}
+  #print(list_NumberB);
+
+  # Оказывается можно это делать проще: надо вычислить лучший и худший вектор
+  list_Numbers := computeOptimalVector(bMatrix); # {-1,0,1}
+  list_NumberA := list_Numbers[1];
+  list_NumberB := list_Numbers[2]*(-1);
 
   if list_NumberA[1] < list_NumberB[1] then
     return true;
@@ -527,7 +533,8 @@ end proc:
 
 # function computeOptimalVector
 computeOptimalVector := proc (m::Matrix) 
-  local i, j, listNumberLists, listValues, listTemp, listEmpty, resultVector, count, size, listSort, temp; 
+  local i, j, listNumberLists, listValues, listTemp, listEmpty, count, size, listSort, temp,
+    resultVectorBet, resultVectorBad; 
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
   print(listNumberLists); 
@@ -553,8 +560,9 @@ computeOptimalVector := proc (m::Matrix)
     listSort := temp;
   end do; 
   print(listSort); 
-  resultVector := listSort[1]; 
-  return resultVector;
+  resultVectorBet := listSort[1]; 
+  resultVectorBad := listSort[nops(listSort)];
+  return [resultVectorBet, resultVectorBad];
   #for i to nops(listValues) do 
   #  if resultVector = listValues[i] then 
   #    count := i; 
