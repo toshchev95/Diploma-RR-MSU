@@ -301,7 +301,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     return op(listGlobal);
     
   else
-    #UID_Results := [op(UID_Results), ];
+    #UID_Results := [op(UID_Results), opMatrix];
     return listGain;
   end if;  
 end proc:
@@ -329,6 +329,8 @@ outputRR := proc(opMatrix::Matrix)
 
   print(List_UIDs);
 
+  printUID(UID_Results);
+
   graphVisualisation(createListEdgesFromNumberOpMatrix());
 
   #saveAs("C:\\output.txt");
@@ -338,7 +340,7 @@ end proc:
 # function convertRR
 convertRR:= proc()
   local i;
-  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results;
 
   # UID_opMatrix
   for i to nops(UID_opMatrix) do
@@ -353,6 +355,10 @@ convertRR:= proc()
   # List_UIDs
   for i to nops(List_UIDs) do
     List_UIDs[i][3] := convertMatrixOrePolyToPoly(List_UIDs[i][3]);
+  end do;
+
+  for i to nops(UID_Results) do
+    UID_Results[i] := convertMatrixOrePolyToPoly(UID_Results[i]);
   end do;
 
 end proc:
@@ -371,6 +377,14 @@ printUID_opMatrix := proc()
   end do;
 #  for i to size by 2 do #    if size - i > 1 then #      print(UID_opMatrix[i],UID_opMatrix[i+1]);
 #    else #      print(UID_opMatrix[i]); #    end if; #  end do;
+end proc:
+
+# function printUID
+printUID := proc(UID)
+  local i;
+  for i to nops(UID) do
+    print(UID);
+  end do;
 end proc:
 
 # function createListEdgesFromNumberOpMatrix
