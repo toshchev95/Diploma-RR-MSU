@@ -253,7 +253,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
   local A,B, saved,saved_poly, nextRR, count;
   local uni, uniList, nextNumber, nextNumberList, estimation;
   local listChain, listGlobal, listGain;
-  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results;
 
 
   # init
@@ -301,6 +301,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     return op(listGlobal);
     
   else
+    #UID_Results := [op(UID_Results), ];
     return listGain;
   end if;  
 end proc:
@@ -308,7 +309,7 @@ end proc:
 # function outputRR()
 outputRR := proc(opMatrix::Matrix)
   local i,j, listResultOpMatrix;
-  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results;
 
   # init # list ? vector
   listResultOpMatrix := list();
@@ -316,6 +317,7 @@ outputRR := proc(opMatrix::Matrix)
   UID_vector := list();
   UID_uniMatrix := list();
   List_UIDs := list();
+  UID_Results := list();
 
   UID_opMatrix := [op(UID_opMatrix), opMatrix];
   listResultOpMatrix := RR(opMatrix, [], 1 );
