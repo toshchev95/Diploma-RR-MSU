@@ -1,4 +1,4 @@
-#$include "C:\\Kursovay\\maple\\ImprovingRR.mpl"
+#$include "C:\\Kursovay\\maple\\Git\\ImprovingRR.mpl"
 with(OreTools):
 with(LinearAlgebra):
 R := SetOreRing(x, 'differential'):
@@ -302,7 +302,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
     return op(listGlobal);
     
   else
-    UID_Results := [op(UID_Results), opMatrix];
+    UID_Results := [op(UID_Results), LinearAlgebra[Copy](opMatrix)];
     return listGain;
   end if;  
 end proc:
@@ -360,15 +360,15 @@ convertRR:= proc()
     List_UIDs[i][3] := convertMatrixOrePolyToPoly(List_UIDs[i][3]);
   end do;
 
-  for i to nops(UID_Results) do
-    UID_Results[i] := convertMatrixOrePolyToPoly(UID_Results[i]);
-  end do;
+  #for i to nops(UID_Results) do
+  #  UID_Results[i] := convertMatrixOrePolyToPoly(UID_Results[i]);
+  #end do;
 
 end proc:
 
 # function convertMatrixOrePolyToPoly
 convertMatrixOrePolyToPoly := proc(matrix::Matrix) # delta #∂
-  return map(proc (x) options operator, arrow; OreTools[Converters]:-FromOrePolyToPoly(x, delta) end proc, matrix);
+  return map(proc (x) options operator, arrow; sort(OreTools[Converters]:-FromOrePolyToPoly(x, delta)) end proc, matrix);
 end proc:
 
 # function printUID_opMatrix

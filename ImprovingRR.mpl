@@ -1,5 +1,5 @@
-$include "C:\\Kursovay\\maple\\bTest.mpl"
-$include "C:\\Kursovay\\maple\\Generate.mpl"
+$include "C:\\Kursovay\\maple\\Git\\bTest.mpl"
+$include "C:\\Kursovay\\maple\\Git\\Generate.mpl"
 with(OreTools):
 with(LinearAlgebra):
 with(RandomTools):
@@ -476,16 +476,16 @@ compareRowsOpMatrx := proc(rowA, rowB)
     end do;
 
     print(rowA,rowB);
-    bResult := processDataCollection();
+    bResult := processDataCollection(bMatrix);
   end if;
 
   return bResult;
 end proc:
 
 # function processDataCollection
-processDataCollection := proc()
-  local i,j,list_NumberA, list_NumberB, list_Numbers;
-  global size, bMatrix; # {-1,0,1}
+processDataCollection := proc(bMatrix) # {-1,0,1}
+  local i,j,list_NumberA, list_NumberB, list_Numbers, size, temp;
+  
   print(bMatrix);
 
   #list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
@@ -498,7 +498,11 @@ processDataCollection := proc()
   # Оказывается можно это делать проще: надо вычислить лучший и худший вектор
   list_Numbers := computeOptimalVector(bMatrix); # {-1,0,1}
   list_NumberA := list_Numbers[1];
-  list_NumberB := list_Numbers[2]*(-1);
+  # inverse
+  list_NumberB := list_Numbers[2];
+  temp := list_NumberB[1];
+  list_NumberB[1] := list_NumberB[3];
+  list_NumberB[3] := temp;
 
   if list_NumberA[1] < list_NumberB[1] then
     return true;
@@ -510,6 +514,7 @@ processDataCollection := proc()
     return false;
   else
     print("!!: processDataCollection");
+    return true;
   end if;
 end proc:
 
@@ -538,7 +543,7 @@ computeOptimalVector := proc (m::Matrix)
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
   print(listNumberLists); 
-  listEmpty := convert(vector(size, 0), list); 
+  listEmpty := convert(vector(3, 0), list); 
   listValues := list(); 
   for i to nops(listNumberLists) do 
     listTemp := listEmpty; 

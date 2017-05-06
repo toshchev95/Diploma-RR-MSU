@@ -1,4 +1,4 @@
-$include "C:\\Kursovay\\maple\\bTest.mpl"
+$include "C:\\Kursovay\\maple\\Git\\bTest.mpl"
 with(OreTools):
 with(LinearAlgebra):
 with(RandomTools):
