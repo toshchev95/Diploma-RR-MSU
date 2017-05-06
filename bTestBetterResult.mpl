@@ -10,19 +10,31 @@ R := SetOreRing(x, 'differential'):
 
 # function getBetterResultMatrix
 getBetterResultMatrix := proc(listResultMatrix)
-  local i, resultMatrix, tempOpMatrix;
+  local i, resultMatrix, tempOpMatrix, betterNumber, listResult;
 
   if nops(listResultMatrix) > 1 then
-  	resultMatrix := compareOreMatrix(listResultMatrix[1], listResultMatrix[2]);
+  	betterNumber := 1;
+  	listResult := compareOreMatrix(listResultMatrix[1], listResultMatrix[2]);
+  	resultMatrix := listResult[1];
+  	if listResult[2] = false then
+  		betterNumber := 2;
+  	end if;
 
   	for i from 3 to nops(listResultMatrix) do
   		tempOpMatrix := resultMatrix;
-  	  resultMatrix := compareOreMatrix(tempOpMatrix, listResultMatrix[i]);
+  	  
+  	  listResult := compareOreMatrix(tempOpMatrix, listResultMatrix[i]);
+  	  resultMatrix := listResult[1];
+
+  	  if listResult[2] = false then
+  			betterNumber := i;
+  		end if;
   	end do;
   else
   	resultMatrix := listResultMatrix[1];
   end if;
 
+  print(resultMatrix, betterNumber);
   return resultMatrix;
 end proc:
 
@@ -65,15 +77,22 @@ compareOreMatrix := proc(opMatrixA, opMatrixB)
 			end do;
 		end do;
 
-		print("bMatrixRows=",bMatrixRows);
-		bCompare := processDataCollection(bMatrixRows);
+		if op(1, bMatrixRows)[1] <> 1 then
+			bCompare := processDataCollection(bMatrixRows);
+		elif bMatrixRows[1,1] = 1 then
+			bCompare := true;
+		elif bMatrixRows[1,1] = -1 then
+			bCompare := false;
+		end if;
+
+		print("bMatrixRows=",bMatrixRows, bCompare);
 	end if;
 
 
 	if bCompare = true then
-		return opMatrixA;
+		return [A, true];
 	else
-		return opMatrixB;
+		return [B, false];
 	end if;
 end proc:
 
