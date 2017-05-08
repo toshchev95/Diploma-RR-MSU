@@ -79,7 +79,6 @@ modifyRR := proc(opMatrix::Matrix)
     #saved := getReverseLUMatrix(m_matrix, uni);
     #saved := matrixOreWithoutDenom(saved);
 
-print(99999999999999999999);
     saved := m_matrix;
     #print("LCM:",m_newRow, eqLCMinMatrix(convert(m_newRow,list)));
     saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
@@ -411,11 +410,11 @@ compareRowsOpMatrx := proc(rowA, rowB)
   highDiffA := getHighDifferRow2(rowA);
   highDiffB := getHighDifferRow2(rowB);
   # 2
-  sumDiffOrdersA := sum('map(proc (ore) options operator, arrow; nops(ore)-1 end proc, rowA)[k]', k = 1 .. size);
-  sumDiffOrdersB := sum('map(proc (ore) options operator, arrow; nops(ore)-1 end proc, rowB)[k]', k = 1 .. size);
-  # 3
   listRowA := convert(map(proc (ore) options operator, arrow; [seq(x, `in`(x, ore))] end proc, rowA), list);
   listRowB := convert(map(proc (ore) options operator, arrow; [seq(x, `in`(x, ore))] end proc, rowB), list);
+  sumDiffOrdersA := sum('map(proc (ore) options operator, arrow; getSumDiffOrders(ore) end proc, listRowA)[k]', k = 1 .. size);
+  sumDiffOrdersB := sum('map(proc (ore) options operator, arrow; getSumDiffOrders(ore) end proc, listRowB)[k]', k = 1 .. size);
+  # 3
   numberDiffRowA := getNumberDiffRow(listRowA);
   numberDiffRowB := getNumberDiffRow(listRowB);
   # 4
