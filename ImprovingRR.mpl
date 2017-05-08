@@ -323,6 +323,9 @@ cmpParameters := proc(listPar_A, listPar_B)
 
   #print(op(listPar_A[1..3]));
   #print(op(listPar_B[1..3]));
+  #print(evalb(convert(listPar_A[3],list) = MultiplyPolyOnListOre(-1, convert(listPar_B[3],list))));
+  #print(convert(listPar_A[3],list));
+  #print(MultiplyPolyOnListOre(-1, convert(listPar_B[3],list)));
 
   # Будем применять эвристики по убыванию
   # if then elif then elif then else end if;
@@ -331,7 +334,7 @@ cmpParameters := proc(listPar_A, listPar_B)
   # максимальный порядок дифф. в строках, кот. соответствуют не нулевые значения nullSpace
   # При выборе учесть, что в новой строке HighOrderDiff м.б. = 0.
   # (!) Note: достаточно вычислить новую строку
-  if evalb(listPar_A[3] <> listPar_B[3]) then
+  if evalb(listPar_A[3] <> listPar_B[3]) or evalb(convert(listPar_A[3],list) <> MultiplyPolyOnListOre(-1, convert(listPar_B[3],list))) then
 
     polyNullSpace_A := listPar_A[1][indexA];
     polyNullSpace_B := listPar_B[1][indexB];
@@ -534,8 +537,9 @@ end proc:
 
 # function computeOptimalVector
 computeOptimalVector := proc (m::Matrix) 
-  local i, j, listNumberLists, listValues, listTemp, listEmpty, count, size, listSort, temp,
+  local i, j, listNumberLists, listValues, listTemp, listEmpty, count, size, temp,
     resultVectorBet, resultVectorBad; 
+  global listSort;
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
   print(listNumberLists); 
@@ -557,7 +561,7 @@ computeOptimalVector := proc (m::Matrix)
   print(listValues); 
   listSort := list(); 
   for i to nops(listValues) do 
-    temp := insertValuesInList(listValues[i], listSort); 
+    temp := insertValuesInList(listValues[i]); # , listSort); 
     listSort := temp;
   end do; 
   print(listSort); 
@@ -574,8 +578,9 @@ computeOptimalVector := proc (m::Matrix)
 end proc:
 
 # function insertValuesInList
-insertValuesInList := proc (values, listSort) 
+insertValuesInList := proc (values) #(values, listSort)
   local i, j, newListSort; 
+  global listSort;
   if nops(listSort) = 0 then 
     return [values];
   end if; 
@@ -585,7 +590,7 @@ insertValuesInList := proc (values, listSort)
         if i = 1 then 
           return [values, op(listSort)];
         else 
-          return [op(listSort[1 .. i-1]), values, op(listSort[i+1, nops(listSort)])];
+          return [op(listSort[1 .. i-1]), values, op(listSort[i+1 .. nops(listSort)])];
         end if;
       elif i = nops(listSort) then 
         return [op(listSort), values];
@@ -616,7 +621,13 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
         sumPolySumOrder10_A, sumPolySumOrder10_B,
         sumPolyWithout0_A, sumPolyWithout0_B, sumOrdersPolynomialsA, sumOrdersPolynomialsB,
         numberDiffA, numberDiffB, sumPlusCoeffsA, sumPlusCoeffsB; 
-  global bRepeatCompareRows;
+  global bRepeatCompareRows := false;
+
+  if evalb(oreA = OreTools:-Multiply(OrePoly(-1), oreB, R)) then
+    bRepeatCompareRows := true;
+    return true;
+  end if;
+
   listA := [seq(x, `in`(x, oreA))]; 
   listB := [seq(x, `in`(x, oreB))]; 
 
@@ -647,8 +658,8 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   sumPolyB := sum('listB[k]', k = 1 .. sizeB); 
   sumPolySumOrder10_A := getSumOrder10([sumPolyA]);
   sumPolySumOrder10_B := getSumOrder10([sumPolyB]);
-  sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA,x)))[k]', k = 1 .. nops(sumPolyA)); 
-  sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops(sumPolyB)); 
+  sumPlusCoeffsA := sum('seq(abs(c), `in`(c, coeffs(sumPolyA,x)))[k]', k = 1 .. nops([coeffs(sumPolyA,x)])); 
+  sumPlusCoeffsB := sum('seq(abs(c), `in`(c, coeffs(sumPolyB,x)))[k]', k = 1 .. nops([coeffs(sumPolyB,x)])); 
 
   # process DiffOrders
   if nops(oreA) < nops(oreB) then 
@@ -693,19 +704,54 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
     return true;
   elif sumPolySumOrder10_A > sumPolySumOrder10_B then
     return false;
+  end if;
 
-  elif sumPlusCoeffsA < sumPlusCoeffsB then 
+  #bBetterOrePolySumNumbersInEqualDiffOrder := isBetterOrePolySumNumbersInEqualDiffOrder(oreA,oreB);
+  if bRepeatCompareRows = false then
+    if bBetterOrePolySumNumbersInEqualDiffOrder = true then
+      return true;
+    else
+      return false;
+    end if;
+  end if;
+
+  if sumPlusCoeffsA < sumPlusCoeffsB then 
     bRepeatCompareRows := true;
     return true;
   elif sumPlusCoeffsB < sumPlusCoeffsA then 
     bRepeatCompareRows := true;
-    return false; 
+    return false;
   else 
     # using sumListDifferentLength(), coeffFull()
     print("In func compareOrePoly: else"); 
     bRepeatCompareRows := true;
     return true;
   end if;
+end proc:
+
+# function isBetterOrePolySumNumbersInEqualDiffOrder
+isBetterOrePolySumNumbersInEqualDiffOrder := proc (oreA, oreB) 
+  local i, j, sumNumbersA, sumNumbersB, coefA, coefB, listA, listB; 
+  global bRepeatCompareRows; 
+  if nops(oreA) <> nops(oreB) then 
+    bRepeatCompareRows := true; 
+    return true; 
+  end if; 
+  listA := [seq(x, `in`(x, oreA))]; 
+  listB := [seq(x, `in`(x, oreB))]; 
+  for i to nops(oreA) do 
+    coefA := [seq(abs(c), `in`(c, coeffs(listA[i], x)))]; 
+    coefB := [seq(abs(c), `in`(c, coeffs(listB[i], x)))]; 
+    sumNumbersA := sum('coefA[k]', k = 1 .. nops(coefA)); 
+    sumNumbersB := sum('coefB[k]', k = 1 .. nops(coefB)); 
+    if sumNumbersB < sumNumbersA then 
+      return false 
+    elif sumNumbersA < sumNumbersB then 
+      return true; 
+    end if; 
+  end do; 
+  bRepeatCompareRows := true; 
+  return true;
 end proc:
 
 # function getSumOrder10
