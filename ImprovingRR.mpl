@@ -114,24 +114,24 @@ getInfoOnOpMatrix := proc()
     m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix, nullSpace;
 
   highDiffMatrix := max(convert(m_deg_rows, list));
-  print(m_deg_rows,"highDiffMatrix",highDiffMatrix);
+  #print(m_deg_rows,"highDiffMatrix",highDiffMatrix);
   maxOrd := 0;
 
   # Список номеров строк для неоднозначности при получении унимод матриц
   listNumberRowsForUniMatrix := list(); # [[1,2],[3,4]]
   # Список номеров строк, столбцов операторной матрицы, по к. есть неоднозначности uniMatrix
-  listNumbersRowsColsInfo := list(); # [1,2,3,4]
+  #listNumbersRowsColsInfo := list(); # [1,2,3,4]
   for i to nops(fullNullSpace) do
     nullSpace := fullNullSpace[i];
 
     numbersRowsNullSpace := getListNumberHighDiffForUniMat(nullSpace, m_deg_rows);
     # ?
-    listNumbersRowsColsInfo := [op(listNumbersRowsColsInfo),op(numbersRowsNullSpace)];
+    #listNumbersRowsColsInfo := [op(listNumbersRowsColsInfo),op(numbersRowsNullSpace)];
     listNumberRowsForUniMatrix := [op(listNumberRowsForUniMatrix),numbersRowsNullSpace];
   end do;
-  listNumbersRowsColsInfo := ListTools:-MakeUnique(listNumbersRowsColsInfo);
+    #listNumbersRowsColsInfo := ListTools:-MakeUnique(listNumbersRowsColsInfo);
   print("listNumberRowsForUniMatrix=",listNumberRowsForUniMatrix);
-  print("listNumbersRowsColsInfo=",listNumbersRowsColsInfo);
+    #print("listNumbersRowsColsInfo=",listNumbersRowsColsInfo);
 
   # Вычислим матрицу, где каждый элемент содержит инфу об OrePoly в виде 2-х списков:
   # listOfOrderDiff, listOfPoly
@@ -183,8 +183,6 @@ getInfoOnOpMatrix := proc()
   for i to size do
     listOrderDiffRowUniMat := convert(vector(size,m_deg_rows[i]),list) - m_deg_rows;
     m_listRowsInfoUniMatrix[i]:= [listOrderDiffRowUniMat, max(listOrderDiffRowUniMat)];       # , info_2, info_3, ...]
-    # if member(i,listNumbersRowsColsInfo) then
-    # end if;
   end do;
 
   # m_infoOnMatrix - структура, содержащая доп инфу
@@ -323,6 +321,9 @@ cmpParameters := proc(listPar_A, listPar_B)
     indexA := listPar_A[2];
     indexB := listPar_B[2];
 
+  #print(op(listPar_A[1..3]));
+  #print(op(listPar_B[1..3]));
+
   # Будем применять эвристики по убыванию
   # if then elif then elif then else end if;
   # 1) Выберем min( delta(i) + HighOrderDiff(opMatrix in non-zero row's nullSpace) )
@@ -342,16 +343,10 @@ cmpParameters := proc(listPar_A, listPar_B)
       listPar_temp := listPar_B;
     
     # nops polyNullSpace
-    elif nops(polyNullSpace_A) < nops(polyNullSpace_B) then # # listPar_A[4] == listPar_B[4]
-      listPar_temp := listPar_A;
-    elif nops(polyNullSpace_A) > nops(polyNullSpace_B) then
-      listPar_temp := listPar_B;
-
-    # # degree polyNullSpace
-    # elif degree(polyNullSpace_A) < degree(polyNullSpace_B) then
-    #   listPar_temp := listPar_A;
-    # elif degree(polyNullSpace_A) > degree(polyNullSpace_B) then
-    #   listPar_temp := listPar_B;
+    #elif nops(polyNullSpace_A) < nops(polyNullSpace_B) then # # listPar_A[4] == listPar_B[4]
+    #  listPar_temp := listPar_A;
+    #elif nops(polyNullSpace_A) > nops(polyNullSpace_B) then
+    #  listPar_temp := listPar_B;
 
     elif indexA = indexB then
       if compareRowsOpMatrx(listPar_A[3], listPar_B[3]) = true then
@@ -391,7 +386,9 @@ compareRowsOpMatrx := proc(rowA, rowB)
     indexA, indexB, bRepeatCompareRows,
     bMatrix;
 
-  print(indexA, indexB);
+  #print(indexA, indexB);
+  #print(rowA,rowB);
+
   if evalb(rowA = m_matrix[indexB]) and evalb(rowB = m_matrix[indexA]) then
     # m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
     # m_RowsInfo := [sumListDifferentLength(listOfOrderDiff), sumListDifferentLength(listOfPoly)];
