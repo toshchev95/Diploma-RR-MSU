@@ -50,7 +50,7 @@ frontGenerate := proc(size, countVectors, highBound::integer, bNullVectors)
   else
     delta := 1.0 / (countVectors + 1);  
   end if;
-  front := RandomMatrix(size, density = delta, generator = 0 .. 1);
+  front := RandomMatrix(size, density = delta, generator = 0 .. 1); # density = 1 - delta, generator = -1 .. 1);
 
   for i to size do
     for j to size do
@@ -78,7 +78,7 @@ frontGenerate := proc(size, countVectors, highBound::integer, bNullVectors)
       od;
     od;
   end do;
-  print(countVectors,"=/=",size - LinearAlgebra:-Rank(front));
+  #print(countVectors,"=/=",size - LinearAlgebra:-Rank(front));
   return front;
 end proc:
 
@@ -264,10 +264,10 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
     #print(vectorUnEnableDiff);
 
     # fill out 
-    print(front);
+    #print(front);
     for i to size do
       if globalDelta[i] <> 0 then
-        print(i);
+        #print(i);
         operatorMatrix[i] := generateRowOrePoly(front[i], highBound, highDiff);
       end if;
     od;
@@ -305,7 +305,7 @@ end proc:
 #                         otherwise: generating OrePoly stepenDiff < highDiff !
 
 generateOrePoly := proc(highDiff, highBound, isHighDiffer, optionalElem)
-  local i, j, stepenDiff, rndom, high, polyOre, highDiff0;
+  local i, j, stepenDiff, rndom, high, polyOre, highDiff0, isNULL;
   polyOre := OrePoly(0);
 
   if not(isHighDiffer) then
@@ -320,7 +320,8 @@ generateOrePoly := proc(highDiff, highBound, isHighDiffer, optionalElem)
     if i = highDiff0 and isHighDiffer then
       rndom := optionalElem;
     else
-      rndom := Generate(integer(range= -highBound .. highBound));
+      isNULL := Generate(integer(range= 0 .. 1));
+      rndom := isNULL*Generate(integer(range= -highBound .. highBound));
     end if;
     polyOre := OreTools:-Add(polyOre, LinearOperators[DEToOrePoly](rndom*stepenDiff, y(x)));
   od;
@@ -396,12 +397,12 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalM
   if bOptionalMatrix = true then
     m_Gen := optionalMatrix;
   else
-    m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 10);
+    m_Gen := matrixOperatorGenerate(size, 0, false, m_highDiff, 30);
   end if;
   m_Gen := matrixOreWithoutDenom(m_Gen);
 
   m_prevGen := m_Gen;
-  print(m_Gen);#, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
+  #print(m_Gen);#, getFrontMatrix(m_Gen), nullspaceWithoutDenom(getFrontMatrix(m_Gen)));
 
   for i to iter do
     m_getMatrix := m_Gen;
@@ -411,7 +412,7 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalM
       or LinearAlgebra:-Equal(m_getMatrix,m_prevGen) or bFirstIterWhile do
 
       bFirstIterWhile := false;
-      print("while");
+      #print("while");
       
       # Выполняем алгоритм Row-Reduction в обратном порядке с учётом обратной унимодулярной матрицы.
       # Сгенерируем обратную унимодулярную матрицу (хз как) и умножим на невырожденную матрицу
@@ -427,7 +428,7 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalM
 
       # Создадим обратную операторную унимодулярную матрицу 
       m_UniMatrix := getReverseUnimodularMatrix(m_indexMaxDiffOrderInList);
-      print("m_UniMatrix = ",m_UniMatrix);
+      #print("m_UniMatrix = ",m_UniMatrix);
 
       # Compute L' = m_UniMatrix*m_Gen
       # Аналог function getReverseLUMatrix(L,U) = U*L
@@ -440,7 +441,7 @@ GenerateMatrixRR := proc(size, iter, highDiff::integer,bOptionalMatrix,optionalM
     
     m_prevGen := m_Gen;
     m_Gen := m_getMatrix;
-    print(i,m_Gen,LinearAlgebra:-Equal(m_Gen,m_prevGen));
+    #print(i,m_Gen,LinearAlgebra:-Equal(m_Gen,m_prevGen));
 
     # Пока не понятно, как обработать параметры
     # <!> Возникает сложность, связанная с получением неоднозначности, у которой количество векторов ЛЗ будет больше одного

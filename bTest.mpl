@@ -247,15 +247,12 @@ end proc:
 ##########_REPLACE_#########
 ############################
 
-#listIK := []; print(RR(P, listIK)):
-
-# function RR
-RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer, numberIteration::integer)
+# function firtstRR
+firtstRR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer, numberIteration::integer)
   local A,B, saved,saved_poly, nextRR, count;
   local uni, uniList, nextNumber, nextNumberList, estimation;
   local listChain, listGlobal, listGain, listResult;
-  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration;
-
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration, UID_bIteration;
 
   # init
   A := getFrontMatrix(opMatrix);
@@ -292,7 +289,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer, numberIterati
         UID_opMatrix := [op(UID_opMatrix), saved];
         List_UIDs := [op(List_UIDs), [numberOpMatrix, uniList[nextNumberList][1], uni[nextNumber], nops(UID_opMatrix)]];
   
-        nextRR := RR(saved, listGain, nops(UID_opMatrix), numberIteration + 1);
+        nextRR := firtstRR(saved, listGain, nops(UID_opMatrix), numberIteration + 1);
         listChain := nextRR;
         listGlobal := [op(listGlobal), listChain];
       end do;
@@ -305,6 +302,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer, numberIterati
       UID_iteration := numberIteration;
     elif numberIteration < UID_iteration then
       UID_iteration := numberIteration;
+      UID_bIteration := true;
     end if;
 
     listResult := [LinearAlgebra[Copy](opMatrix), numberIteration];
@@ -316,7 +314,7 @@ end proc:
 # function outputRR()
 outputRR := proc(opMatrix::Matrix)
   local i,j, listResultOpMatrix, m_matrix;
-  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration,UID_bIteration;
 
   # init # list ? vector
   listResultOpMatrix := list();
@@ -326,22 +324,22 @@ outputRR := proc(opMatrix::Matrix)
   List_UIDs := list();
   UID_Results := list();
   UID_iteration := -10;
+  UID_bIteration := false;
 
   m_matrix := matrixOreWithoutGCD(opMatrix);
   UID_opMatrix := [op(UID_opMatrix), m_matrix];
 
-  listResultOpMatrix := RR(m_matrix, [], 1, 0 );
+  listResultOpMatrix := firtstRR(m_matrix, [], 1, 0 );
 
   convertRR();
 
   #print(UID_opMatrix);
-  printUID_opMatrix();
 
-  print(List_UIDs);
-
-  print("End Results");
-  printList(UID_Results, true, 1);
-  print("numberIteration=",UID_iteration);
+  ############### printUID_opMatrix();
+  ############### print(List_UIDs);
+  ############### print("End Results");
+  ############### printList(UID_Results, true, 1);
+  ############### print("numberIteration=",UID_iteration);
 
   graphVisualisation(createListEdgesFromNumberOpMatrix());
 
@@ -387,8 +385,6 @@ printUID_opMatrix := proc()
   for i to size do
     print(i,UID_opMatrix[i]);
   end do;
-#  for i to size by 2 do #    if size - i > 1 then #      print(UID_opMatrix[i],UID_opMatrix[i+1]);
-#    else #      print(UID_opMatrix[i]); #    end if; #  end do;
 end proc:
 
 # function printList
@@ -415,7 +411,7 @@ createListEdgesFromNumberOpMatrix := proc()
   global List_UIDs;
 
   listEdges := list();
-  print(List_UIDs);
+  #print(List_UIDs);
   if nops(List_UIDs) > 1 then
     for i to nops(List_UIDs) do
       UIDs := List_UIDs[i];

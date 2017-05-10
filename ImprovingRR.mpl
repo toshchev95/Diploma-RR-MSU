@@ -41,7 +41,7 @@ modifyRR := proc(opMatrix::Matrix)
   step:=1; listIterMatrix := [opMatrix];
 
   m_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrix));
-  print(m_matrix);
+  #print(m_matrix);
   front := getFrontMatrix(m_matrix);
 
   # Statistics:-Count
@@ -130,7 +130,7 @@ getInfoOnOpMatrix := proc()
     listNumberRowsForUniMatrix := [op(listNumberRowsForUniMatrix),numbersRowsNullSpace];
   end do;
     #listNumbersRowsColsInfo := ListTools:-MakeUnique(listNumbersRowsColsInfo);
-  print("listNumberRowsForUniMatrix=",listNumberRowsForUniMatrix);
+  #print("listNumberRowsForUniMatrix=",listNumberRowsForUniMatrix);
     #print("listNumbersRowsColsInfo=",listNumbersRowsColsInfo);
 
   # Вычислим матрицу, где каждый элемент содержит инфу об OrePoly в виде 2-х списков:
@@ -396,11 +396,11 @@ compareRowsOpMatrx := proc(rowA, rowB)
     # m_infoOnMatrix := [m_RowsInfo, m_ColsInfo,m_listRowsInfoUniMatrix,listNumberRowsForUniMatrix];
     # m_RowsInfo := [sumListDifferentLength(listOfOrderDiff), sumListDifferentLength(listOfPoly)];
     # listOfOrderDiff - бесполезен
-    print("if then");
+    #print("if then");
     m_resRowInfoA := OrePoly(op(getNonNullList(m_infoOnMatrix[1][2][indexB])));
     m_resRowInfoB := OrePoly(op(getNonNullList(m_infoOnMatrix[1][2][indexA])));
   else
-    print("else", rowA);
+    #print("else", rowA);
     m_resRowInfoA := OrePoly(op(getNonNullList(getSumOrePolyInRows(rowA))));
     m_resRowInfoB := OrePoly(op(getNonNullList(getSumOrePolyInRows(rowB))));
   end if;
@@ -474,7 +474,7 @@ compareRowsOpMatrx := proc(rowA, rowB)
 
     end do;
 
-    print(rowA,rowB);
+    #print(rowA,rowB);
     bResult := processDataCollection(bMatrix);
   end if;
 
@@ -484,8 +484,9 @@ end proc:
 # function processDataCollection
 processDataCollection := proc(bMatrix) # {-1,0,1}
   local i,j,list_NumberA, list_NumberB, list_Numbers, size, temp;
+  global UID_using := true;
   
-  print(bMatrix);
+  #print(bMatrix);
 
   #list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
   #print(list_NumberA);
@@ -539,10 +540,10 @@ end proc:
 computeOptimalVector := proc (m::Matrix) 
   local i, j, listNumberLists, listValues, listTemp, listEmpty, count, size, temp,
     resultVectorBet, resultVectorBad; 
-  global listSort;
+  global listSort, UID_equalMatrix := false;
   size := LinearAlgebra:-RowDimension(m); 
   listNumberLists := computeVectors(m); 
-  print(listNumberLists); 
+  #print(listNumberLists); 
   listEmpty := convert(vector(3, 0), list); 
   listValues := list(); 
   for i to nops(listNumberLists) do 
@@ -556,15 +557,23 @@ computeOptimalVector := proc (m::Matrix)
         listTemp[3] := listTemp[3]+1;
       end if;
     end do; 
+
+    ####### fot Testing : equalMatrix ######
+    if listTemp[1] = 0 and listTemp[3] = 0 then
+      UID_equalMatrix := true;
+    end if;
+    ####### fot Testing ######
     listValues := [op(listValues), listTemp];
   end do; 
-  print(listValues); 
+  #print(listValues); 
   listSort := list(); 
   for i to nops(listValues) do 
     temp := insertValuesInList(listValues[i]); # , listSort); 
     listSort := temp;
   end do; 
-  print(listSort); 
+  #print(listSort); 
+  UID_equalMatrix := existNullVector();
+
   resultVectorBet := listSort[1]; 
   resultVectorBad := listSort[nops(listSort)];
   return [resultVectorBet, resultVectorBad];
@@ -631,7 +640,7 @@ compareOrePoly := proc (oreA, oreB, rowA, rowB)
   listA := [seq(x, `in`(x, oreA))]; 
   listB := [seq(x, `in`(x, oreB))]; 
 
-  print(oreA,oreB);
+  #print(oreA,oreB);
   sizeA := nops(listA); 
   sizeB := nops(listB); 
 

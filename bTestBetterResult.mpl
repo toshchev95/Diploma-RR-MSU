@@ -24,16 +24,17 @@ end proc:
 
 # function getBetterResultMatrix
 getBetterResultMatrix := proc(list_UID_Result, iteration) # [resultMatrix, numberIteration]
-  local i, resultMatrix, tempOpMatrix, betterNumber, listResult, listResultMatrix;
+  local i, resultMatrix, tempOpMatrix, listResult, listResultMatrix;
+  global UID_betterNumber;
 
   listResultMatrix := getListResultMatrixLessIteration(list_UID_Result, iteration);
 
   if nops(listResultMatrix) > 1 then
-  	betterNumber := 1;
+  	UID_betterNumber := 1;
   	listResult := compareOreMatrix(listResultMatrix[1], listResultMatrix[2]);
   	resultMatrix := listResult[1];
   	if listResult[2] = false then
-  		betterNumber := 2;
+  		UID_betterNumber := 2;
   	end if;
 
   	for i from 3 to nops(listResultMatrix) do
@@ -43,14 +44,14 @@ getBetterResultMatrix := proc(list_UID_Result, iteration) # [resultMatrix, numbe
   	  resultMatrix := listResult[1];
 
   	  if listResult[2] = false then
-  			betterNumber := i;
+  			UID_betterNumber := i;
   		end if;
   	end do;
   else
   	resultMatrix := listResultMatrix[1];
   end if;
 
-  print(resultMatrix, betterNumber);
+  #print(resultMatrix, UID_betterNumber);
   return resultMatrix;
 end proc:
 
@@ -58,6 +59,7 @@ end proc:
 compareOreMatrix := proc(opMatrixA, opMatrixB)
 	local i,j, bCompare, bResult, listNumbersDiffRows, A, B,
 		size, countNumbersDiffRows, bMatrixRows, listNumbersDiffRowsA, listNumbersDiffRowsB;
+  global UID_equalMatrix;
 
   #print(whattype(opMatrixA), opMatrixA);
   A := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixA));
@@ -177,7 +179,7 @@ compareRowsOpMatrix2 := proc(rowA, rowB)
   bRepeatCompareRows := false;  
   bResult := compareOrePoly(m_resRowInfoA,m_resRowInfoB, rowA, rowB);
   if bRepeatCompareRows = true then
-    print("!");
+    #print("!");
 
     bMatrix := Matrix(size);
     for i to size do # rowA
@@ -195,7 +197,7 @@ compareRowsOpMatrix2 := proc(rowA, rowB)
 
     end do;
 
-    print(rowA,rowB);
+    #print(rowA,rowB);
     bResult := processDataCollection(bMatrix);
   end if;
 
