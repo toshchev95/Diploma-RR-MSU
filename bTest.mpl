@@ -3,25 +3,25 @@ with(OreTools):
 with(LinearAlgebra):
 R := SetOreRing(x, 'differential'):
 
-L := Matrix([[OrePoly(x, 0, 0, 1),   OrePoly(0, 0, 2),    OrePoly(x^2+x)], 
+L_example := Matrix([[OrePoly(x, 0, 0, 1),   OrePoly(0, 0, 2),    OrePoly(x^2+x)], 
              [OrePoly(0, 1),         OrePoly(0, 0, x),    OrePoly(2*x^2+1)], 
              [OrePoly(0, 0, 1),      OrePoly(0, x),       OrePoly(1)]]):
 
-L1 := Matrix([[OrePoly(0, x, 0, 0, 1),   OrePoly(0, 0, 0, 2),    OrePoly(0, x^2+x)], 
+L1_example := Matrix([[OrePoly(0, x, 0, 0, 1),   OrePoly(0, 0, 0, 2),    OrePoly(0, x^2+x)], 
               [OrePoly(x, 0, 0, 1),   OrePoly(0, 0, 2),    OrePoly(x^2-x)],
               [OrePoly(0, 0, 1),      OrePoly(0, x),       OrePoly(1)]]):
 
-M  := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
+M_example  := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
               [OrePoly(x, 0, x),       OrePoly(0, 0, 2, 6),    OrePoly(0, x^2+x),  OrePoly(1)],
               [OrePoly(0, 3),          OrePoly(0, x, 8, 3),    OrePoly(1),         OrePoly(1)],
               [OrePoly(0, 2),          OrePoly(0, x, 8, 3),    OrePoly(1),         OrePoly(1)] ]):
 
-M1 := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
+M1_example := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
               [OrePoly(x, 0, x),       OrePoly(0, x^2+x),    OrePoly(0, 2, 6),  OrePoly(1)],
               [OrePoly(0, 3),          OrePoly(0, x, 8, 3),    OrePoly(1),         OrePoly(1)],
               [OrePoly(0, x, 8, 3),          OrePoly(x),    OrePoly(1),         OrePoly(1)] ]):
 
-P := Matrix([[OrePoly((1/2)*x^2), OrePoly(1, -(1/2)*x)], [OrePoly(-3, -x), OrePoly(0, 0, 1)]]):
+P_example := Matrix([[OrePoly((1/2)*x^2), OrePoly(1, -(1/2)*x)], [OrePoly(-3, -x), OrePoly(0, 0, 1)]]):
 
 getMatrix := proc()
   return L1;
@@ -263,7 +263,6 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
   #listGain := [];
   listGlobal := [];
 
-  #estimation := estimations(opMatrix, 0);
   count := Statistics:-Count(listG);
   if count > 0 then
     listGain := [op(listG), opMatrix];
@@ -287,7 +286,7 @@ RR := proc(opMatrix::Matrix, listG::list, numberOpMatrix::integer)
       
         saved := getReverseLUMatrix(opMatrix, uni[nextNumber]);
         # Вычислим по каждой строке матрицы GCD и разделим на него
-        saved := matrixOreWithoutGCD(saved);
+        saved := matrixOreWithoutGCD(matrixOreWithoutDenom(saved));
 
         # UID
         UID_opMatrix := [op(UID_opMatrix), saved];
@@ -309,7 +308,7 @@ end proc:
 
 # function outputRR()
 outputRR := proc(opMatrix::Matrix)
-  local i,j, listResultOpMatrix;
+  local i,j, listResultOpMatrix, m_matrix;
   global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results;
 
   # init # list ? vector
@@ -320,8 +319,10 @@ outputRR := proc(opMatrix::Matrix)
   List_UIDs := list();
   UID_Results := list();
 
-  UID_opMatrix := [op(UID_opMatrix), opMatrix];
-  listResultOpMatrix := RR(opMatrix, [], 1 );
+  m_matrix := matrixOreWithoutGCD(opMatrix);
+  UID_opMatrix := [op(UID_opMatrix), m_matrix];
+
+  listResultOpMatrix := RR(m_matrix, [], 1 );
 
   convertRR();
 
@@ -396,19 +397,29 @@ createListEdgesFromNumberOpMatrix := proc()
   global List_UIDs;
 
   listEdges := list();
-  for i to nops(List_UIDs) do
-    UIDs := List_UIDs[i];
-    edge := [UIDs[1],UIDs[4]];
-    listEdges := [op(listEdges), edge];
-  end do;
+  print(List_UIDs);
+  if nops(List_UIDs) > 1 then
+    for i to nops(List_UIDs) do
+      UIDs := List_UIDs[i];
+      edge := [UIDs[1],UIDs[4]];
+      listEdges := [op(listEdges), edge];
+    end do;
+  else
+    print("createListEdgesFromNumberOpMatrix: Operator matrix is result end matrix");
+    #listEdges := [[1,1]];
+  end if;
 
   return listEdges;
 end proc:
 
 # function graphVisualisation(list)
 graphVisualisation := proc (listEdges) 
-  local graph := GraphTheory:-Graph(undirected, convert(listEdges, set)); 
-  GraphTheory:-DrawGraph(graph, style = tree, root = 1);
+  local graph := GraphTheory:-Graph(undirected, convert(listEdges, set));
+  if nops(listEdges) > 1 then
+    GraphTheory:-DrawGraph(graph, style = tree, root = 1);
+  else
+    print("graphVisualisation: Operator matrix is result end matrix");
+  end if;
 end proc:
 
 # filename := "C:\\Kursovay\\maple\\Git\\output.txt"
@@ -446,7 +457,7 @@ matrixOreWithoutGCD := proc(opMatrix::Matrix)
 
   for i to size do
     vector := opMatrix[i];
-    value_gcd := eqGCDinListOre(vector);
+    value_gcd := eqGCDinListOre(convert(vector,list));
     if value_gcd <> 1 then
       opMatrix[i] := map(proc (ore) options operator, arrow; OrePoly(seq(simplify(y/value_gcd), `in`(y, ore))) end proc, convert(vector,Vector[row]));
     end;

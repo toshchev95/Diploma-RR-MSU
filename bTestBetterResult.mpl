@@ -43,8 +43,9 @@ compareOreMatrix := proc(opMatrixA, opMatrixB)
 	local i,j, bCompare, bResult, listNumbersDiffRows, A, B,
 		size, countNumbersDiffRows, bMatrixRows, listNumbersDiffRowsA, listNumbersDiffRowsB;
 
-	A := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixA));
-	B := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixB));
+  #print(whattype(opMatrixA), opMatrixA);
+  A := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixA));
+  B := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixB));
 	
 	print("Compare Matrix");
 	print(A);

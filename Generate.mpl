@@ -6,18 +6,18 @@ with(ArrayTools):
 with(ListTools):
 R := SetOreRing(x, 'differential'):
 
-L := Matrix([[OrePoly(x, 0, 0, 1),   OrePoly(0, 0, 2),    OrePoly(x^2+x)], 
+L_example := Matrix([[OrePoly(x, 0, 0, 1),   OrePoly(0, 0, 2),    OrePoly(x^2+x)], 
              [OrePoly(0, 1),         OrePoly(0, 0, x),    OrePoly(2*x^2+1)], 
              [OrePoly(0, 0, 1),      OrePoly(0, x),       OrePoly(1)]]):
 
-M  := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
+M_example  := Matrix([[OrePoly(0, 1, 3, 7),    OrePoly(0, 0, 11),      OrePoly(2*x^2+1),   OrePoly(1)], 
               [OrePoly(x, 0, x),       OrePoly(0, 0, 2, 6),    OrePoly(0, x^2+x),  OrePoly(1)],
               [OrePoly(0, 3),          OrePoly(0, x, 8, 3),    OrePoly(1),         OrePoly(1)],
               [OrePoly(0, 2),          OrePoly(0, x, 8, 3),    OrePoly(1),         OrePoly(1)] ]):
 
-P := Matrix([[OrePoly((1/2)*x^2), OrePoly(1, -(1/2)*x)], [OrePoly(-3, -x), OrePoly(0, 0, 1)]]):
+P_example := Matrix([[OrePoly((1/2)*x^2), OrePoly(1, -(1/2)*x)], [OrePoly(-3, -x), OrePoly(0, 0, 1)]]):
 
-Bug1 := Matrix(4, 4, 
+Bug1_example := Matrix(4, 4, 
           {(1, 1) = 0, (1, 2) = 1, (1, 3) = 0, (1, 4) = 0, 
           (2, 1) = 0, (2, 2) = 15, (2, 3) = 0, (2, 4) = 0, 
           (3, 1) = 5, (3, 2) = 0, (3, 3) = 10, (3, 4) = 6, 
