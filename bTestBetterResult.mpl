@@ -8,9 +8,25 @@ with(ArrayTools):
 with(ListTools):
 R := SetOreRing(x, 'differential'):
 
+# function getListResultMatrixLessIteration
+getListResultMatrixIteration := proc(list_UID_Result, numberIteration) # [resultMatrix, numberIteration]
+  local resultMatrix, i, j, size, listResultMatrixLessIteration;
+  listResultMatrixLessIteration := list();
+
+  for i to nops(list_UID_Result) do
+    if numberIteration = list_UID_Result[2] then
+      listResultMatrixLessIteration := [op(listResultMatrixLessIteration), list_UID_Result[1]];
+    end if;
+  end do;
+
+  return listResultMatrixLessIteration;
+end proc:
+
 # function getBetterResultMatrix
-getBetterResultMatrix := proc(listResultMatrix)
-  local i, resultMatrix, tempOpMatrix, betterNumber, listResult;
+getBetterResultMatrix := proc(list_UID_Result, iteration) # [resultMatrix, numberIteration]
+  local i, resultMatrix, tempOpMatrix, betterNumber, listResult, listResultMatrix;
+
+  listResultMatrix := getListResultMatrixLessIteration(list_UID_Result, iteration);
 
   if nops(listResultMatrix) > 1 then
   	betterNumber := 1;
