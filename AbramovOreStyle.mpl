@@ -18,11 +18,10 @@ getAbramovStyle := proc (opMatrix::Matrix)
     m_deg_rows := [op(m_deg_rows), temp] 
   end do; 
   maxDiff := max(m_deg_rows);
-  print(maxDiff-1); 
+  print(maxDiff); 
   emptyList := convert(vector(maxDiff, 0), list); 
-  listMatrixDiff := convert(vector(maxDiff, 0), list); 
+  listMatrixDiff := convert(vector(maxDiff + 1, 0), list); 
   explicitListsMat := convertOreMatrixToExplicitMatrix(opMatrix, maxDiff); 
-  print(explicitListsMat);
   for k from 0 to maxDiff do 
     temp := LinearAlgebra[Copy](Matrix(size)); 
     for i to size do 
@@ -42,7 +41,6 @@ convertOreMatrixToExplicitMatrix := proc (opMatrix::Matrix, maxDiff)
   size := op(1, opMatrix)[1]; 
   explicitMat := Matrix(size); 
   emptyList := convert(vector(maxDiff + 1, 0), list); 
-  print(emptyList);
   for i to size do 
     for j to size do 
       polyList := [seq(x, `in`(x, opMatrix[i, j]))]; 
