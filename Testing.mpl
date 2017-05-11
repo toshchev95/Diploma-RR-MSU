@@ -20,6 +20,10 @@ read("C:\\Kursovay\\maple\\Git\\AbramovOreStyle.mpl");
 read("C:\\Kursovay\\maple\\Git\\egrr.mpl");
 # read("C:\\Kursovay\\maple\\Git\\Testing.mpl");
 
+# Bugs
+# Error, (in getOreStyle) In func getOreStyle: row and column dimensions are wrong
+# 
+
 # function test
 test := proc(m, r, iter, bOptionalRandMat)
 	local i,j,k, m_Gen, m_Opt, m_matrix, m_start, m_start_explicit, m_better,
@@ -69,20 +73,22 @@ test := proc(m, r, iter, bOptionalRandMat)
   	end if;
 
   	# RR, TriangleRR
-  	print("Abramov");
-  	m_start_explicit := getAbramovStyle(m_start);
-		print("m_start_explicit");
-  	rr_matrix_explicit := RR(m_start_explicit, highDiff + 1, x);
-  	print("rr_matrix_explicit");
-  	triangle_rr_matrix_explicit := TriangleRR(m_start_explicit, highDiff + 1, x);
-  	print("triangle_rr_matrix_explicit");
+  	#print("Abramov");
+  	#m_start_explicit := getAbramovStyle(m_start);
+		#print("m_start_explicit");
+  	
+  	#rr_matrix_explicit := RR(m_start_explicit, highDiff + 1, x);
+  	#print("rr_matrix_explicit");
+
+  	#triangle_rr_matrix_explicit := TriangleRR(m_start_explicit, highDiff + 1, x);
+  	#print("triangle_rr_matrix_explicit");
 	
-		rr_explicit := getOreStyle(rr_matrix_explicit[1], highDiff);
-		triangle_rr_explicit := getOreStyle(triangle_rr_matrix_explicit[1], highDiff);
-  	rr_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(rr_explicit));
-  	print("rr_matrix=",rr_matrix);
-  	triangle_rr_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(triangle_rr_explicit));
-  	print("triangle_rr_matrix=",triangle_rr_matrix);
+		#rr_explicit := getOreStyle(rr_matrix_explicit[1], highDiff);
+		#triangle_rr_explicit := getOreStyle(triangle_rr_matrix_explicit[1], highDiff);
+  	#rr_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(rr_explicit));
+  	#print("rr_matrix=",rr_matrix);
+  	#triangle_rr_matrix := matrixOreWithoutGCD(matrixOreWithoutDenom(triangle_rr_explicit));
+  	#print("triangle_rr_matrix=",triangle_rr_matrix);
 
   	# check
   	if LinearAlgebra[Equal](m_matrix, m_better) = false or UID_bIteration = true then
@@ -96,23 +102,25 @@ test := proc(m, r, iter, bOptionalRandMat)
   		countMyRR := countMyRR + 1;
 		end if;
 	
-		UID_equalMatrix := false;
-		compareOreMatrix(m_better, rr_matrix);
-		if UID_equalMatrix = true then
-			countRR := countRR + 1;
-		end if;
+		#UID_equalMatrix := false;
+		#compareOreMatrix(m_better, rr_matrix);
+		#if UID_equalMatrix = true then
+		#	countRR := countRR + 1;
+		#end if;
 	
-		UID_equalMatrix := false;
-		compareOreMatrix(m_better, triangle_rr_matrix);
-		if UID_equalMatrix = true then
-			countTriangleRR := countTriangleRR + 1;
-		end if;
+		#UID_equalMatrix := false;
+		#compareOreMatrix(m_better, triangle_rr_matrix);
+		#if UID_equalMatrix = true then
+		#	countTriangleRR := countTriangleRR + 1;
+		#end if;
 	end do;
 
 	print("percent MyRR= ", countMyRR/countTests);
-	print("percent AbrRR= ", countRR/countTests);
-	print("percent AbrTrRR= ", countTriangleRR/countTests);
+	#print("percent AbrRR= ", countRR/countTests);
+	#print("percent AbrTrRR= ", countTriangleRR/countTests);
 	print("percent UsingAlgoritm= ", countUsingAlgoritm/countTests);
+  print("percent different number Iteration= ", countLessIteration/countTests);
+  
 end proc:
 
 # function getOrderDiffMatrix

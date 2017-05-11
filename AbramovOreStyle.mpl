@@ -53,6 +53,7 @@ end proc:
 # function getOreStyle
 getOreStyle := proc (explMat::Matrix, r::integer) # r - DiffOrder
   local i, j, k, size, temp, oreMat, polyElem, length, urez; 
+  print(explMat, r);
   size := op(1, explMat)[2]/(r+1); 
   if frac(size) <> 0 then 
     print(size, frac(size)); 

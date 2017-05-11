@@ -1,4 +1,4 @@
-# code of Abramov S.A. CMC MSU
+# code of Abramov S.A. CMC MSU have bugs of indexes
 ###################################################################
 EGRR := module ()
 
@@ -96,7 +96,7 @@ EGRR := module ()
            AlgCount := AlgCount + cd;
            dummy := Vector[row](cd, 0);
            V := Vector[row](rw);
-           dummy[1 .. cd-n] := Vector[row](V[n+1 .. cd]);
+           dummy[1 .. round(cd-n)] := Vector[row](V[trunc(n+1) .. cd]);
            eval(map(dualnormal,dummy+LinearAlgebra:-Map(z->diff(z, x), V)));
          end if;
     end proc;
@@ -242,9 +242,10 @@ EGRR := module ()
         alphai := min(op(alphas));
         while alphai>0 do
             for i to rd do
+                print(i, trunc(cd-alphas[i]*n+1), trunc(cd-alphas[i]*n+n));
                 print(i, cd-alphas[i]*n+1, cd-alphas[i]*n+n);
             end do;
-            RM := Matrix([seq([EM[i,cd-alphas[i]*n+1..cd-alphas[i]*n+n]], i = 1 .. rd)]);
+            RM := Matrix([seq([EM[i,trunc(cd-alphas[i]*n+1)..trunc(cd-alphas[i]*n+n)]], i = 1 .. rd)]);
             if noLA then
                 p := dep(RM);
                 if p=false then

@@ -15,13 +15,11 @@ getListResultMatrixIteration := proc(list_UID_Result, iteration) # [resultMatrix
 
   for i to nops(list_UID_Result) do
     listTemp := list_UID_Result[i];
-    print(listTemp);
     if iteration = listTemp[2] then
       listResultMatrixLessIteration := [op(listResultMatrixLessIteration), listTemp[1]];
     end if;
   end do;
-  print(123123123);
-  print(listResultMatrixLessIteration);
+
   return listResultMatrixLessIteration;
 end proc:
 
@@ -77,9 +75,9 @@ compareOreMatrix := proc(opMatrixA, opMatrixB)
   A := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixA));
   B := matrixOreWithoutGCD(matrixOreWithoutDenom(opMatrixB));
 	
-	print("Compare Matrix");
-	print(A);
-	print(B);
+	#print("Compare Matrix");
+	#print(A);
+	#print(B);
 	bCompare := true;
 	size := op(1, opMatrixA)[1];
 
@@ -116,7 +114,7 @@ compareOreMatrix := proc(opMatrixA, opMatrixB)
 			bCompare := false;
 		end if;
 
-		print("bMatrixRows=",bMatrixRows, bCompare);
+		#print("bMatrixRows=",bMatrixRows, bCompare);
 	end if;
 
 

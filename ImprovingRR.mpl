@@ -784,7 +784,7 @@ getSumOrdersPolynomialsRow := proc(listPolyRow)
   global size;
   sumOrdersPolynomialsRow := 0;
   for i to size do
-    sumOrdersPolynomialsRow := umOrdersPolynomialsRow + getSumOrdersPolynomials(listPolyRow[i]);
+    sumOrdersPolynomialsRow := sumOrdersPolynomialsRow + getSumOrdersPolynomials(listPolyRow[i]);
   end do;
   return sumOrdersPolynomialsRow;
 end proc:
