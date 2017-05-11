@@ -230,7 +230,7 @@ EGRR := module ()
     RR := proc(EM1::Matrix, m, x, remember::boolean:=false, noLA::boolean:=false)
         local
             rd, cd, n, RM, ns, p, dummy, i, j, alphai, alphas, d, EM;
-
+        print(EM1);
         forget(diff_row);
         DiffCount := 0;
         AlgCount := 0;
@@ -241,6 +241,9 @@ EGRR := module ()
         alphas := [seq(alpha(EM[i], n, cd), i = 1..rd)];
         alphai := min(op(alphas));
         while alphai>0 do
+            for i to rd do
+                print(i, cd-alphas[i]*n+1, cd-alphas[i]*n+n);
+            end do;
             RM := Matrix([seq([EM[i,cd-alphas[i]*n+1..cd-alphas[i]*n+n]], i = 1 .. rd)]);
             if noLA then
                 p := dep(RM);

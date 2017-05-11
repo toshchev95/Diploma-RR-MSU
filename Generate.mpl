@@ -192,7 +192,7 @@ matrixOperatorGenerate := proc(size, countVectors, bUnimodular, highDiff, highBo
   # \/_init_\/
   operatorMatrix := Matrix(size); # create empty matrix
 
-    front := frontGenerate(size,countVectors, highBound,true);#x1;
+    front := frontGenerate(size,countVectors, highBound,true);
     globalDelta := Vector[row](size, 1);
     vectorUnEnableDiff := list();
     

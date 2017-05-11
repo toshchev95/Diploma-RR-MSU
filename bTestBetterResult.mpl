@@ -9,25 +9,37 @@ with(ListTools):
 R := SetOreRing(x, 'differential'):
 
 # function getListResultMatrixLessIteration
-getListResultMatrixIteration := proc(list_UID_Result, numberIteration) # [resultMatrix, numberIteration]
-  local resultMatrix, i, j, size, listResultMatrixLessIteration;
+getListResultMatrixIteration := proc(list_UID_Result, iteration) # [resultMatrix, numberIteration]
+  local i, listResultMatrixLessIteration, listTemp;
   listResultMatrixLessIteration := list();
 
   for i to nops(list_UID_Result) do
-    if numberIteration = list_UID_Result[2] then
-      listResultMatrixLessIteration := [op(listResultMatrixLessIteration), list_UID_Result[1]];
+    listTemp := list_UID_Result[i];
+    print(listTemp);
+    if iteration = listTemp[2] then
+      listResultMatrixLessIteration := [op(listResultMatrixLessIteration), listTemp[1]];
     end if;
   end do;
-
+  print(123123123);
+  print(listResultMatrixLessIteration);
   return listResultMatrixLessIteration;
 end proc:
 
 # function getBetterResultMatrix
 getBetterResultMatrix := proc(list_UID_Result, iteration) # [resultMatrix, numberIteration]
-  local i, resultMatrix, tempOpMatrix, listResult, listResultMatrix;
+  local i, resultMatrix, tempOpMatrix, listResult, listResultMatrix,
+    listResultMatrixLessIteration, listTemp;
   global UID_betterNumber;
 
-  listResultMatrix := getListResultMatrixLessIteration(list_UID_Result, iteration);
+  #print(list_UID_Result[1], nops(list_UID_Result));
+  #listResultMatrix := getListResultMatrixLessIteration(list_UID_Result, iteration);
+  listResultMatrix := list();
+  for i to nops(list_UID_Result) do
+    listTemp := list_UID_Result[i];
+    if iteration = listTemp[2] then
+      listResultMatrix := [op(listResultMatrix), listTemp[1]];
+    end if;
+  end do;
 
   if nops(listResultMatrix) > 1 then
   	UID_betterNumber := 1;
