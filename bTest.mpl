@@ -331,7 +331,7 @@ outputRR := proc(opMatrix::Matrix)
 
   listResultOpMatrix := firtstRR(m_matrix, [], 1, 0 );
 
-  convertRR();
+  ############### convertRR();
 
   #print(UID_opMatrix);
 

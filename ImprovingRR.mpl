@@ -56,7 +56,7 @@ modifyRR := proc(opMatrix::Matrix)
     for i to size do
       m_deg_rows[i] := getHighDifferRow2(m_matrix[i]);
     end do;
-    print("m_deg_rows",m_deg_rows);
+    #print("m_deg_rows",m_deg_rows);
 
     firstListNumberHighDiffForUniMat := getListNumberHighDiffForUniMat(fullNullSpace[1], m_deg_rows);
     if nops(fullNullSpace) = 1 and nops(firstListNumberHighDiffForUniMat) = 1 then
@@ -84,9 +84,9 @@ modifyRR := proc(opMatrix::Matrix)
     saved[m_indexRowOrderDiff] := eqLCMinMatrix(convert(m_newRow,list));
     saved := matrixOreWithoutGCD(saved);
 
-    print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
+    #print(step, m_nullSpace, "index=",m_indexRowOrderDiff,uni,step+1);
     step:=step+1;
-    print(saved);
+    #print(saved);
     listIterMatrix := [op(listIterMatrix), saved];
 
     # check again
@@ -444,7 +444,7 @@ compareRowsOpMatrx := proc(rowA, rowB)
   elif sumOrdersPolynomialsRowA > sumOrdersPolynomialsRowB then
     return false;
   else
-    print("In func compareRowsOpMatrx: execute special comparing algorithm");
+    #print("In func compareRowsOpMatrx: execute special comparing algorithm");
   end if;  
 
   # a) сумма всех порядков дифференцирования (<)
@@ -456,7 +456,7 @@ compareRowsOpMatrx := proc(rowA, rowB)
   bRepeatCompareRows := false;  
   bResult := compareOrePoly(m_resRowInfoA,m_resRowInfoB, rowA, rowB);
   if bRepeatCompareRows = true then
-    print("!");
+    #print("!");
 
     bMatrix := Matrix(size);
     for i to size do # rowA
@@ -475,7 +475,7 @@ compareRowsOpMatrx := proc(rowA, rowB)
     end do;
 
     #print(rowA,rowB);
-    bResult := processDataCollection(bMatrix);
+    bResult := processDataCollection(bMatrix):
   end if;
 
   return bResult;
@@ -484,8 +484,8 @@ end proc:
 # function processDataCollection
 processDataCollection := proc(bMatrix) # {-1,0,1}
   local i,j,list_NumberA, list_NumberB, list_Numbers, size, temp;
-  global UID_using := true;
-  
+  global UID_using := true, UID_equalMatrix;
+  UID_equalMatrix := false;
   #print(bMatrix);
 
   #list_NumberA := computeOptimalVector(bMatrix); # {-1,0,1}
@@ -513,7 +513,8 @@ processDataCollection := proc(bMatrix) # {-1,0,1}
   elif list_NumberA[3] < list_NumberB[3] then
     return false;
   else
-    print("!!: processDataCollection");
+    #print("!!: processDataCollection");
+    UID_equalMatrix := true;
     return true;
   end if;
 end proc:
