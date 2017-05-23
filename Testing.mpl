@@ -134,6 +134,84 @@ getOrderDiffMatrix := proc(opMatrix::Matrix)
       temp := getHighDifferRow2(opMatrix[i]); 
       m_deg_rows := [op(m_deg_rows), temp] 
   end do; 
-  print("m_deg_rows",m_deg_rows);
+  #print("m_deg_rows",m_deg_rows);
   return max(m_deg_rows);
+end proc:
+
+
+# function testFindEvent
+testFindEvent := proc(m, r, iter, bOptionalRandMat)
+  local i,j,k, m_Gen, m_Opt, m_matrix, m_start, m_start_explicit, m_better,
+    rr_matrix, triangle_rr_matrix, rr_matrix_explicit, triangle_rr_matrix_explicit, rr_explicit, triangle_rr_explicit,
+    bUsing, countRR, countTriangleRR, countMyRR, countTests, countUsingAlgoritm, countLessIteration, countIteration,
+    highDiff, temp;
+  global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration,UID_bIteration, 
+    UID_betterNumber, UID_equalMatrix, UID_using;
+
+  countTests := 100;
+
+  for i to countTests do
+    if bOptionalRandMat = true then
+      m_Opt := matrixOperatorGenerate(m, 2, true, r, 10):
+      m_Gen := GenerateMatrixRR(m, iter, r, bOptionalRandMat, m_Opt):
+    else
+      m_Gen := matrixOperatorGenerate(m, 2, true, r, 10):
+    end if;
+
+    m_start := copy(matrixOreWithoutGCD(matrixOreWithoutDenom(m_Gen))):
+    highDiff := getOrderDiffMatrix(m_start);
+#   
+  
+    # myself
+    UID_bIteration := false;
+    temp := outputRR(m_start):
+    if nops(UID_Results) = 1 then
+      i := i - 1;
+      print("Repeat Test");
+      next;
+    end if;
+
+    if UID_bIteration = true then
+      next;
+    end if;
+
+    print("m_start=",m_start,UID_iteration, nops(UID_Results), nops(UID_vector));
+    graphVisualisation(createListEdgesFromNumberOpMatrix());
+
+
+    if UID_iteration = 2 and evalb(nops(UID_Results) >= 3) and nops(UID_vector) >= 4 
+      #and ( LinearAlgebra[Equal](convert(UID_vector[1][2], vector), convert(UID_vector[2][2], vector))
+      #or LinearAlgebra[Equal](convert(UID_vector[2][2], vector), convert(UID_vector[3][2], vector))
+      #or LinearAlgebra[Equal](convert(UID_vector[1][2], vector), convert(UID_vector[3][2], vector)) ) 
+      then
+      
+
+      printUID_opMatrix();
+      print(List_UIDs);
+      print("End Results");
+      printList(UID_Results, true, 1);
+      print("numberIteration=",UID_iteration);
+      print(UID_vector);
+    
+      break;
+    else
+      next;
+    end if;
+
+
+    
+  end do;
+
+  
+end proc:
+
+# function outputTest
+outputTest := proc()
+      printUID_opMatrix();
+      print(List_UIDs);
+      print("End Results");
+      printList(UID_Results, true, 1);
+      print("numberIteration=",UID_iteration);
+    
+      graphVisualisation(createListEdgesFromNumberOpMatrix());
 end proc:
