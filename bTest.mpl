@@ -341,7 +341,7 @@ outputRR := proc(opMatrix::Matrix)
   ############### printList(UID_Results, true, 1);
   ############### print("numberIteration=",UID_iteration);
 
-  ###############graphVisualisation(createListEdgesFromNumberOpMatrix()):
+  ############### graphVisualisation(createListEdgesFromNumberOpMatrix());
 
   #saveAs("C:\\output.txt");
   #return listResultOpMatrix;

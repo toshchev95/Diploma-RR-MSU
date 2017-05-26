@@ -148,7 +148,7 @@ testFindEvent := proc(m, r, iter, bOptionalRandMat)
   global UID_opMatrix, UID_vector, UID_uniMatrix, List_UIDs, UID_Results, UID_iteration,UID_bIteration, 
     UID_betterNumber, UID_equalMatrix, UID_using;
 
-  countTests := 100;
+  countTests := 1;
 
   for i to countTests do
     if bOptionalRandMat = true then
@@ -179,7 +179,7 @@ testFindEvent := proc(m, r, iter, bOptionalRandMat)
     graphVisualisation(createListEdgesFromNumberOpMatrix());
 
 
-    if UID_iteration = 2 and evalb(nops(UID_Results) >= 3) and nops(UID_vector) >= 4 
+    if true or UID_iteration = 2 and evalb(nops(UID_Results) >= 3) and nops(UID_vector) >= 4 
       #and ( LinearAlgebra[Equal](convert(UID_vector[1][2], vector), convert(UID_vector[2][2], vector))
       #or LinearAlgebra[Equal](convert(UID_vector[2][2], vector), convert(UID_vector[3][2], vector))
       #or LinearAlgebra[Equal](convert(UID_vector[1][2], vector), convert(UID_vector[3][2], vector)) ) 
@@ -187,11 +187,11 @@ testFindEvent := proc(m, r, iter, bOptionalRandMat)
       
 
       printUID_opMatrix();
-      print(List_UIDs);
+      #print(List_UIDs);
       print("End Results");
       printList(UID_Results, true, 1);
       print("numberIteration=",UID_iteration);
-      print(UID_vector);
+      #print(UID_vector);
     
       break;
     else
